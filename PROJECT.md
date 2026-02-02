@@ -18,9 +18,21 @@
 - Design épuré, moderne, beaucoup de blanc
 - Formulaire de réservation en split-screen (récap à gauche, étapes à droite)
 - Barre de progression colorée en haut des étapes
-- Boutons larges, typographie claire, mobile-first
+- Boutons larges, typographie claire
 - Simplicité absolue : le client doit pouvoir réserver en moins de 2 minutes
 - Palette de couleurs Livrizi (à définir, mais inspirée du bleu/jaune Lugg)
+
+### Mobile-first (OBLIGATOIRE)
+**Toute l'application doit être pensée et développée en mobile-first.** La cible principale (étudiants, jeunes) navigue essentiellement sur smartphone.
+- **Chaque page, chaque composant, chaque formulaire doit d'abord être designé pour mobile**, puis adapté au desktop
+- Le responsive n'est pas un bonus, c'est la base
+- Comportement mobile spécifique :
+  - **Flow de réservation** : le panneau récap gauche disparaît, seul le formulaire s'affiche. Le récap est accessible via un bouton toggle (ex: "Voir le résumé")
+  - **Dashboards** : navigation par menu hamburger ou bottom navigation bar (comme une app native)
+  - **Cartes Google Maps** : pleine largeur sur mobile
+  - **Boutons** : larges, facilement cliquables au pouce (min 48px de hauteur)
+  - **Formulaires** : un champ par ligne, clavier adapté (type="tel" pour téléphone, type="email" pour email)
+- À terme (Phase 4), envisager une **PWA** (Progressive Web App) pour une expérience quasi-native sur mobile (icône sur l'écran d'accueil, notifications push, mode hors-ligne basique)
 
 ### Cible
 - Jeunes / étudiants
