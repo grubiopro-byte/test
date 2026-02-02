@@ -220,4 +220,69 @@ Reproduire l'expérience **lugg.com** en France :
 
 ---
 
+## 8. Architecture technique cible
+
+### Principe
+- **livrizi.fr** (Shopify) = vitrine SEO + première accroche. Le client entre ses adresses, choisit véhicule + livrizeurs, puis est redirigé vers `book.livrizi.fr`
+- **book.livrizi.fr** (Next.js sur Vercel) = web app complète. Fonctionne aussi de manière **autonome** (le client peut faire tout le flow sans passer par Shopify)
+
+### Stack cible (tout gratuit)
+
+| Besoin | Outil | Coût |
+|--------|-------|------|
+| Frontend + Backend | Next.js | Gratuit |
+| Base de données + Auth | Supabase | Gratuit (tier free) |
+| Hébergement | Vercel | Gratuit (tier free) |
+| Paiement marketplace | Stripe Connect | 0€ fixe, ~1.4% + 0.25€/transaction |
+| Maps / Géolocalisation | Google Maps API | Déjà utilisé |
+| Notifications temps réel | Supabase Realtime | Inclus |
+| Dev assisté par IA | Cursor + Claude | Déjà utilisé |
+| SEO / Vitrine | Shopify | Déjà en place |
+
+### Flow de réservation client (book.livrizi.fr) — inspiré de Lugg
+
+Layout : **split-screen** — récap "Votre Livrizi" à gauche (carte + résumé progressif), formulaire étape par étape à droite.
+
+| Étape | Contenu | Détails |
+|-------|---------|---------|
+| **Step 1/6** | Adresses départ & arrivée | Autocomplétion Google Maps. Pré-rempli si vient de Shopify, sinon saisie libre. Carte affichée avec point A → B |
+| **Step 2/6** | Véhicule + livrizeurs | **Dynamique** : affiche uniquement les véhicules disponibles dans la zone du client (basé sur les livrizeurs inscrits et leur rayon d'action). Choix 1 ou 2 livrizeurs avec prix correspondant |
+| **Step 3/6** | Date & créneau d'arrivée | Sélection jour (Today, +1, +2, +3, More) + créneaux horaires |
+| **Step 4/6** | Objets à transporter | Description texte + upload photos (optionnel) |
+| **Step 5/6** | Accès & manutention | Accès point A et B (pied du camion / étages avec ou sans ascenseur) + option de manutention (Express / Prolongée / Prolongée+ / Prolongée Max) avec **prix calculé en temps réel** |
+| **Step 6/6** | Coordonnées + paiement | Téléphone, email, prénom, nom + **paiement Stripe intégré** |
+
+### Panneau récap gauche ("Votre Livrizi")
+Se remplit progressivement à chaque étape :
+- Carte Google Maps (point A → B)
+- Adresse départ
+- Adresse arrivée
+- Véhicule + nombre de livrizeurs
+- Prix estimé
+- Créneau d'arrivée
+- Objets à transporter
+
+### Logique de disponibilité des véhicules (Step 2)
+- Chaque livrizeur inscrit renseigne : adresse de base, type de véhicule, **rayon d'action en km**
+- Quand un client entre son adresse de départ (Step 1), le système calcule la distance entre le point A et l'adresse de base de chaque livrizeur
+- Seuls les véhicules des livrizeurs dont le rayon couvre le point A sont affichés au Step 2
+- Si aucun livrizeur n'est disponible dans la zone → message "Livrizi n'est pas encore disponible dans votre zone"
+
+### Pages de la web app
+
+**Côté client :**
+- `/reservation` — flow de booking en 6 étapes
+- `/confirmation` — récap après paiement
+- `/mes-courses` — historique + suivi en temps réel
+
+**Côté livrizeur :**
+- `/livrizeur/inscription` — créer son profil (nom, véhicule, adresse, rayon d'action)
+- `/livrizeur/missions` — missions disponibles dans sa zone
+- `/livrizeur/mes-missions` — missions acceptées + historique
+
+**Côté admin :**
+- `/admin` — toutes les courses, tous les livrizeurs, revenus/commissions
+
+---
+
 *Ce document sera utilisé comme contexte de référence pour toutes les futures conversations sur l'optimisation, l'automatisation et le développement technique de Livrizi.*
