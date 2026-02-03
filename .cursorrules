@@ -1,0 +1,160 @@
+# .cursorrules — Règles strictes pour le développement de Livrizi
+
+## DOCUMENTS DE RÉFÉRENCE (à lire AVANT toute action)
+Tu DOIS lire et respecter ces 3 fichiers à la racine du projet :
+1. `PROJECT.md` — Bible technique : architecture, flow de réservation, matching, base de données, formules de prix, phases de dev
+2. `BUSINESS.md` — Contexte business : modèle éco, cible, chiffres, workflow actuel
+3. `UI_RULES.md` — Design system : couleurs, typographie, composants, spacing, layout
+
+**Si une information est dans ces fichiers, c'est la source de vérité. Ne jamais contredire ou ignorer ces specs.**
+
+---
+
+## RÈGLES ABSOLUES
+
+### 1. Ne rien inventer
+- **NE PAS** ajouter de fonctionnalités non décrites dans PROJECT.md
+- **NE PAS** modifier les formules de tarification (section 6 de PROJECT.md)
+- **NE PAS** changer l'ordre des étapes du flow de réservation (section 4 de PROJECT.md)
+- **NE PAS** ajouter des champs ou des tables non prévus dans le schéma de base de données (section 14 de PROJECT.md)
+- **NE PAS** inventer des endpoints API, des routes, ou des pages qui ne sont pas listés dans PROJECT.md (section 15)
+- Si tu penses qu'il manque quelque chose, **demande confirmation** avant de l'ajouter
+
+### 2. Suivre les phases de développement
+- Les phases sont définies en section 16 de PROJECT.md
+- **NE PAS** implémenter des fonctionnalités de Phase 2, 3 ou 4 si on travaille sur la Phase 1
+- Respecter l'ordre des phases sauf instruction contraire explicite
+
+### 3. Design = UI_RULES.md
+- **NE JAMAIS** inventer de styles ou de couleurs
+- Utiliser UNIQUEMENT les tokens définis dans UI_RULES.md
+- Pas de styles inline dans les pages (`src/app/**/page.tsx`)
+- Tout style passe par des composants dans `src/components/ui/`
+- Les boutons, inputs, cards DOIVENT correspondre aux specs exactes de UI_RULES.md
+- Mobile-first obligatoire (PROJECT.md section "Mobile-first")
+
+### 4. Architecture stricte
+- **UN SEUL** projet Next.js (App Router)
+- **UN SEUL** projet Supabase
+- Hébergement : Vercel
+- Paiement : Stripe Connect
+- Maps : Google Maps API
+- **NE PAS** proposer d'autres technologies sans demande explicite
+- **NE PAS** ajouter de dépendances non nécessaires (pas de bibliothèques UI comme shadcn, Material UI, Chakra, etc. sauf si demandé)
+
+### 5. Structure de fichiers
+```
+src/
+├── app/                    # Pages (App Router)
+│   ├── reservation/        # Flow booking 6 étapes
+│   ├── confirmation/       # Page confirmation
+│   ├── client/             # Dashboard client (auth)
+│   ├── livrizeur/          # Dashboard + inscription livrizeur
+│   ├── admin/              # Dashboard admin (auth)
+│   └── layout.tsx          # Layout racine
+├── components/
+│   ├── ui/                 # Composants réutilisables (Button, Input, Card, etc.)
+│   ├── reservation/        # Composants spécifiques au booking
+│   ├── dashboard/          # Composants spécifiques aux dashboards
+│   └── layout/             # Header, Footer, Sidebar, etc.
+├── lib/
+│   ├── supabase.ts         # Client Supabase
+│   ├── stripe.ts           # Config Stripe
+│   ├── pricing.ts          # Formules de tarification (COPIER de PROJECT.md section 6)
+│   └── utils.ts            # Utilitaires
+├── hooks/                  # Custom React hooks
+└── types/                  # Types TypeScript
+```
+**Ne pas dévier de cette structure sans raison valable.**
+
+### 6. Qualité de code
+- TypeScript strict : pas de `any`, typer toutes les props et fonctions
+- Composants React fonctionnels uniquement (pas de classes)
+- Un composant = un fichier
+- Nommer les fichiers en kebab-case (ex: `vehicle-selector.tsx`)
+- Nommer les composants en PascalCase (ex: `VehicleSelector`)
+- Pas de `console.log` en production
+- Pas de code commenté laissé en place ("au cas où")
+- Pas de TODO dans le code sans contexte clair
+
+### 7. Gestion d'état du formulaire de réservation
+- Utiliser un state management simple (React Context ou Zustand) pour le flow de réservation
+- Le state du formulaire doit persister entre les étapes (pas de perte de données au retour en arrière)
+- Les données du formulaire :
+```typescript
+interface ReservationState {
+  // Step 1
+  pickupAddress: string;
+  pickupLat: number;
+  pickupLng: number;
+  dropoffAddress: string;
+  dropoffLat: number;
+  dropoffLng: number;
+  routeMinutes: number;
+
+  // Step 2
+  vehicleType: '6m3' | '11m3' | '20m3';
+  movers: 1 | 2;
+
+  // Step 3
+  scheduledDate: string;
+  scheduledSlot: string;
+
+  // Step 4
+  itemsDescription: string;
+  itemsPhotos: string[];
+  additionalContact: string;
+
+  // Step 5
+  pickupAccess: 'pied_camion' | 'etages_sans_ascenseur' | 'etages_avec_ascenseur';
+  pickupFloors: number;
+  dropoffAccess: 'pied_camion' | 'etages_sans_ascenseur' | 'etages_avec_ascenseur';
+  dropoffFloors: number;
+  manutention: 'express' | 'prolongee' | 'prolongee_plus' | 'prolongee_max';
+
+  // Step 6
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+
+  // Calculated
+  pricePerMin: number;
+  priceTotal: number;
+}
+```
+
+### 8. Formules de prix — NE PAS MODIFIER
+Les formules de tarification sont définies précisément dans PROJECT.md section 6.
+- **NE JAMAIS** arrondir différemment
+- **NE JAMAIS** changer les coefficients (0.85, 1.20, 0.3875, etc.)
+- **NE JAMAIS** modifier la logique de split (80% équipe / 20% Livrizi)
+- Implémenter dans `src/lib/pricing.ts` comme source unique de vérité
+
+### 9. Supabase
+- Utiliser le client Supabase côté serveur (Server Components) pour les lectures
+- Utiliser le client Supabase côté client uniquement quand nécessaire (auth, realtime)
+- Row Level Security (RLS) activé sur toutes les tables
+- Les schémas de tables sont dans PROJECT.md section 14 — les suivre exactement
+
+### 10. Réponses et communication
+- Répondre en **français**
+- Être concis et direct
+- Si tu ne sais pas → dis-le, ne fabrique pas une réponse
+- Si une demande contredit PROJECT.md/BUSINESS.md/UI_RULES.md → signale le conflit et demande quelle source suivre
+- Avant chaque modification importante, **explique ce que tu vas faire et pourquoi**
+- Après chaque modification, **montre ce qui a changé**
+
+---
+
+## INTERDITS (liste non exhaustive)
+- ❌ Ajouter des features non documentées
+- ❌ Changer l'architecture (passer à un autre framework, ajouter un ORM, etc.)
+- ❌ Utiliser des bibliothèques UI tierces (shadcn, Radix, MUI, etc.) sauf si demandé
+- ❌ Modifier les formules de tarification
+- ❌ Ignorer le mobile-first
+- ❌ Créer des fichiers de documentation (.md) non demandés
+- ❌ Utiliser des couleurs/styles non définis dans UI_RULES.md
+- ❌ Halluciner des noms d'API Supabase ou Stripe qui n'existent pas
+- ❌ Supposer que quelque chose "devrait marcher" sans le vérifier
+- ❌ Faire des modifications "au passage" non demandées (refactoring surprise, renommage, etc.)
