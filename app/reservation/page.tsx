@@ -6,6 +6,7 @@ import Step2Vehicle from "@/src/components/reservation/step2-vehicle";
 import Step3DateTime from "@/src/components/reservation/step3-datetime";
 import Step4Items from "@/src/components/reservation/step4-items";
 import Step5Access from "@/src/components/reservation/step5-access";
+import Step6Contact from "@/src/components/reservation/step6-contact";
 
 const TOTAL_STEPS = 6;
 
@@ -70,6 +71,12 @@ export default function ReservationPage() {
   const [dropoffAccess, setDropoffAccess] = useState("pied_camion");
   const [dropoffFloors, setDropoffFloors] = useState(2);
   const [manutention, setManutention] = useState("express");
+
+  // État coordonnées (Step 6)
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
 
   // Formatage du véhicule pour le récap
   const getVehicleLabel = () => {
@@ -480,41 +487,56 @@ export default function ReservationPage() {
                   />
                 )}
 
-                {currentStep !== 1 && currentStep !== 2 && currentStep !== 3 && currentStep !== 4 && currentStep !== 5 && (
-                  <div className="w-full h-[300px] rounded-[12px] border border-[#EDEEF1] flex items-center justify-center bg-white">
-                    <span className="text-gray-400">Contenu de l'étape {currentStep}</span>
-                  </div>
+                {currentStep === 6 && (
+                  <Step6Contact
+                    phone={phone}
+                    email={email}
+                    firstName={firstName}
+                    lastName={lastName}
+                    onPhoneChange={setPhone}
+                    onEmailChange={setEmail}
+                    onFirstNameChange={setFirstName}
+                    onLastNameChange={setLastName}
+                    priceTotal={calculatePrice().priceTotal}
+                    onBack={handleBack}
+                    onBookingComplete={() => {
+                      // TODO: rediriger vers /confirmation
+                      alert("Réservation confirmée !");
+                    }}
+                  />
                 )}
               </form>
             </section>
 
-            {/* Footer boutons */}
-            <nav className="container flex space-x-3 pb-3 pt-6">
-              {/* Bouton retour (caché au Step 1) */}
-              {currentStep > 1 && (
-                <button
-                  onClick={handleBack}
-                  aria-label="Étape précédente"
-                  className="w-12 h-12 rounded-[12px] border border-[#EDEEF1] flex items-center justify-center hover:bg-gray-50 transition-colors duration-150 cursor-pointer"
-                >
-                  <ChevronLeft size={20} className="text-[#6B7280]" />
-                </button>
-              )}
+            {/* Footer boutons (cachés au Step 6 car Step6 a ses propres boutons) */}
+            {currentStep !== 6 && (
+              <nav className="container flex space-x-3 pb-3 pt-6">
+                {/* Bouton retour (caché au Step 1) */}
+                {currentStep > 1 && (
+                  <button
+                    onClick={handleBack}
+                    aria-label="Étape précédente"
+                    className="w-12 h-12 rounded-[12px] border border-[#EDEEF1] flex items-center justify-center hover:bg-gray-50 transition-colors duration-150 cursor-pointer"
+                  >
+                    <ChevronLeft size={20} className="text-[#6B7280]" />
+                  </button>
+                )}
 
-              {/* Bouton Continuer */}
-              <button
-                onClick={handleNext}
-                disabled={!canContinue()}
-                type="submit"
-                className={`flex-1 h-12 rounded-[12px] text-white text-[16px] font-medium leading-6 flex items-center justify-center transition-colors duration-150 ${
-                  canContinue()
-                    ? "bg-[#3D4BA3] hover:bg-[rgb(36,50,138)] cursor-pointer"
-                    : "bg-gray-300 opacity-50 cursor-not-allowed"
-                }`}
-              >
-                Continuer
-              </button>
-            </nav>
+                {/* Bouton Continuer */}
+                <button
+                  onClick={handleNext}
+                  disabled={!canContinue()}
+                  type="submit"
+                  className={`flex-1 h-12 rounded-[12px] text-white text-[16px] font-medium leading-6 flex items-center justify-center transition-colors duration-150 ${
+                    canContinue()
+                      ? "bg-[#3D4BA3] hover:bg-[rgb(36,50,138)] cursor-pointer"
+                      : "bg-gray-300 opacity-50 cursor-not-allowed"
+                  }`}
+                >
+                  Continuer
+                </button>
+              </nav>
+            )}
           </div>
         </aside>
       </div>
