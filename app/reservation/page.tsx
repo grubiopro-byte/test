@@ -39,7 +39,6 @@ const STEP_CONTENT = [
 
 export default function ReservationPage() {
   const [currentStep, setCurrentStep] = useState(1);
-  const [showMobileSummary, setShowMobileSummary] = useState(false);
 
   // État des adresses
   const [pickupAddress, setPickupAddress] = useState("");
@@ -209,7 +208,19 @@ export default function ReservationPage() {
   };
 
   return (
-    <div className="min-h-screen relative" style={{ background: 'linear-gradient(to right, #FAFAFA 50%, #FFFFFF 50%)' }}>
+    <div className="min-h-screen relative bg-white md:bg-[linear-gradient(to_right,#FAFAFA_50%,#FFFFFF_50%)]">
+      {/* Header mobile */}
+      <header className="md:hidden flex items-center justify-between px-5 pt-4 pb-2">
+        <h1 className="text-[22px] font-bold text-[#3D4BA3]">livrizi</h1>
+        <button
+          aria-label="Se connecter"
+          className="flex items-center gap-2 text-[14px] text-[#3D4BA3] hover:text-[rgb(36,50,138)] font-medium transition-colors"
+        >
+          <User size={16} />
+          <span>Se connecter</span>
+        </button>
+      </header>
+
       <div className="mx-auto flex max-w-[53rem] justify-center min-h-screen">
         {/* COLONNE GAUCHE — Récap "Votre Livrizi" */}
         <aside className="hidden md:flex relative w-full lg:max-w-[26.5rem] flex-col self-stretch px-6 pt-[max(100px,10vh)]">
@@ -265,19 +276,9 @@ export default function ReservationPage() {
           </div>
         </aside>
 
-        {/* Bouton mobile pour afficher le résumé */}
-        <div className="md:hidden w-full px-4 mb-4">
-          <button
-            onClick={() => setShowMobileSummary(!showMobileSummary)}
-            className="text-[14px] text-[#3D4BA3] font-medium"
-          >
-            {showMobileSummary ? "Masquer" : "Voir le résumé"}
-          </button>
-        </div>
-
         {/* COLONNE DROITE — Formulaire */}
         <aside className="relative w-full lg:max-w-[26.5rem]">
-          <div className="pb-[84px] lg:pb-0 pt-8 lg:pt-10 px-6 lg:px-10">
+          <div className="pb-[84px] lg:pb-0 pt-4 md:pt-8 lg:pt-10 px-5 md:px-6 lg:px-10">
             {/* Header stepper */}
             <header className="container mb-4 lg:mb-8">
               {/* Step indicator */}
@@ -488,22 +489,119 @@ export default function ReservationPage() {
                 )}
 
                 {currentStep === 6 && (
-                  <Step6Contact
-                    phone={phone}
-                    email={email}
-                    firstName={firstName}
-                    lastName={lastName}
-                    onPhoneChange={setPhone}
-                    onEmailChange={setEmail}
-                    onFirstNameChange={setFirstName}
-                    onLastNameChange={setLastName}
-                    priceTotal={calculatePrice().priceTotal}
-                    onBack={handleBack}
-                    onBookingComplete={() => {
-                      // TODO: rediriger vers /confirmation
-                      alert("Réservation confirmée !");
-                    }}
-                  />
+                  <>
+                    {/* Récap éditable — visible sur mobile uniquement */}
+                    <div className="md:hidden mb-8">
+                      <h3 className="text-[16px] font-semibold text-gray-900 mb-4">Récapitulatif</h3>
+                      <div className="space-y-0 divide-y divide-[#EDEEF1] border border-[#EDEEF1] rounded-[12px] overflow-hidden">
+                        {/* Adresses */}
+                        <div className="flex items-center justify-between px-4 py-3 bg-white">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[12px] text-gray-400">Adresses</p>
+                            <p className="text-[14px] text-gray-900 truncate">{pickupAddress} → {dropoffAddress}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setCurrentStep(1)}
+                            className="text-[13px] text-[#3D4BA3] font-medium ml-3 shrink-0"
+                          >
+                            Modifier
+                          </button>
+                        </div>
+
+                        {/* Véhicule */}
+                        <div className="flex items-center justify-between px-4 py-3 bg-white">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[12px] text-gray-400">Véhicule</p>
+                            <p className="text-[14px] text-gray-900">{getVehicleLabel()}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setCurrentStep(2)}
+                            className="text-[13px] text-[#3D4BA3] font-medium ml-3 shrink-0"
+                          >
+                            Modifier
+                          </button>
+                        </div>
+
+                        {/* Créneau */}
+                        <div className="flex items-center justify-between px-4 py-3 bg-white">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[12px] text-gray-400">Créneau d'arrivée</p>
+                            <p className="text-[14px] text-gray-900">{getScheduleLabel()}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setCurrentStep(3)}
+                            className="text-[13px] text-[#3D4BA3] font-medium ml-3 shrink-0"
+                          >
+                            Modifier
+                          </button>
+                        </div>
+
+                        {/* Objets */}
+                        <div className="flex items-center justify-between px-4 py-3 bg-white">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[12px] text-gray-400">Objets</p>
+                            <p className="text-[14px] text-gray-900 truncate">{getItemsLabel()}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setCurrentStep(4)}
+                            className="text-[13px] text-[#3D4BA3] font-medium ml-3 shrink-0"
+                          >
+                            Modifier
+                          </button>
+                        </div>
+
+                        {/* Accès & manutention */}
+                        <div className="flex items-center justify-between px-4 py-3 bg-white">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[12px] text-gray-400">Accès & manutention</p>
+                            <p className="text-[14px] text-gray-900">
+                              {manutention === 'express' ? 'Express (30 min)' :
+                               manutention === 'prolongee' ? '+1h (1h30)' :
+                               manutention === 'prolongee_plus' ? '+2h (2h30)' : '+3h (3h30)'}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setCurrentStep(5)}
+                            className="text-[13px] text-[#3D4BA3] font-medium ml-3 shrink-0"
+                          >
+                            Modifier
+                          </button>
+                        </div>
+
+                        {/* Prix total */}
+                        <div className="flex items-center justify-between px-4 py-3 bg-[rgba(61,75,163,0.03)]">
+                          <div>
+                            <p className="text-[12px] text-gray-400">Prix estimé</p>
+                            <p className="text-[16px] font-bold text-[#3D4BA3]">
+                              {calculatePrice().priceTotal.toFixed(2).replace('.', ',')} €
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Step6Contact
+                      phone={phone}
+                      email={email}
+                      firstName={firstName}
+                      lastName={lastName}
+                      onPhoneChange={setPhone}
+                      onEmailChange={setEmail}
+                      onFirstNameChange={setFirstName}
+                      onLastNameChange={setLastName}
+                      priceTotal={calculatePrice().priceTotal}
+                      onBack={handleBack}
+                      onBookingComplete={() => {
+                        // TODO: rediriger vers /confirmation
+                        alert("Réservation confirmée !");
+                      }}
+                    />
+                  </>
                 )}
               </form>
             </section>
@@ -540,43 +638,6 @@ export default function ReservationPage() {
           </div>
         </aside>
       </div>
-
-      {/* Overlay mobile pour le résumé */}
-      {showMobileSummary && (
-        <div className="md:hidden fixed inset-0 bg-black/50 z-50" onClick={() => setShowMobileSummary(false)}>
-          <div
-            className="absolute bottom-0 left-0 right-0 bg-white rounded-t-[24px] p-6 max-h-[80vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-6" />
-            
-            <h2 className="text-[22px] font-semibold text-gray-900 mb-6">Votre Livrizi</h2>
-
-            {/* Carte placeholder */}
-            <div className="w-full h-[200px] rounded-[12px] bg-[#F3F4F6] mb-6 flex items-center justify-center">
-              <span className="text-gray-400 text-sm">Google Maps</span>
-            </div>
-
-            {/* Récap timeline */}
-            <div className="flex flex-col">
-              {RECAP_ITEMS.map((item, index) => {
-                const Icon = item.icon;
-                return (
-                  <div key={index} className="flex items-start gap-4 py-3">
-                    <div className="w-8 h-8 rounded-full bg-[#EDEEF1] flex items-center justify-center flex-shrink-0">
-                      <Icon size={16} className="text-[#6B7280]" strokeWidth={1.5} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[13px] text-gray-400 font-normal">{item.label}</div>
-                      <div className="text-[15px] text-gray-900 font-semibold">{item.value}</div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

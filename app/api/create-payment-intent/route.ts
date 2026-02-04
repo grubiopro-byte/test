@@ -15,10 +15,8 @@ export async function POST(req: NextRequest) {
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountInCents,
       currency: "eur",
-      capture_method: "manual", // EMPREINTE BANCAIRE : autorise sans débiter
-      automatic_payment_methods: {
-        enabled: true, // Active carte + Apple Pay + Google Pay automatiquement
-      },
+      capture_method: "manual",
+      payment_method_types: ["card", "link"],
     });
 
     return NextResponse.json({ clientSecret: paymentIntent.client_secret });
