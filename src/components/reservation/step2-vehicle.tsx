@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 interface Step2VehicleProps {
   vehicle: string;
   movers: 1 | 2;
@@ -15,10 +17,8 @@ const vehicles = [
     description: "Idéal pour quelques meubles ou cartons.",
     soloRate: 0.9775,
     duoRate: 1.365,
-    svgWidth: 50,
-    cabX: 50,
-    wheel1: 60,
-    wheel2: 85,
+    imageSolo: "/images/vehicles/6m3-solo.png",
+    imageDuo: "/images/vehicles/6m3-duo.png",
   },
   {
     id: "11m3",
@@ -26,10 +26,8 @@ const vehicles = [
     description: "Idéal pour un studio ou une pièce complète.",
     soloRate: 1.15,
     duoRate: 1.5375,
-    svgWidth: 65,
-    cabX: 65,
-    wheel1: 75,
-    wheel2: 100,
+    imageSolo: "/images/vehicles/11m3-solo.png",
+    imageDuo: "/images/vehicles/11m3-duo.png",
   },
   {
     id: "20m3",
@@ -37,10 +35,8 @@ const vehicles = [
     description: "Idéal pour un appartement T2 ou plus.",
     soloRate: 1.38,
     duoRate: 1.7675,
-    svgWidth: 80,
-    cabX: 80,
-    wheel1: 90,
-    wheel2: 115,
+    imageSolo: "/images/vehicles/20m3-solo.png",
+    imageDuo: "/images/vehicles/20m3-duo.png",
   },
 ];
 
@@ -73,20 +69,14 @@ export default function Step2Vehicle({
                   : "border-gray-200 hover:border-gray-300"
               }`}
             >
-              <div className="w-full h-16 flex items-center justify-center overflow-hidden">
-                {/* Placeholder SVG fourgon */}
-                <svg
-                  className="h-10 w-auto max-w-full text-gray-800"
-                  viewBox="0 0 120 60"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <rect x="5" y="20" width={v.svgWidth} height="25" rx="3" />
-                  <rect x={v.cabX} y="15" width="25" height="30" rx="3" />
-                  <circle cx={v.wheel1} cy="47" r="6" />
-                  <circle cx={v.wheel2} cy="47" r="6" />
-                </svg>
+              <div className="w-full h-20 flex items-center justify-center overflow-hidden">
+                <Image
+                  src={movers === 1 ? v.imageSolo : v.imageDuo}
+                  alt={`Fourgon ${v.label}`}
+                  width={160}
+                  height={80}
+                  className="h-[72px] w-auto object-contain"
+                />
               </div>
               <span className="font-medium text-sm">{v.label}</span>
             </button>
@@ -122,21 +112,13 @@ export default function Step2Vehicle({
 
       {/* Illustration véhicule sélectionné */}
       <div className="w-full h-48 rounded-2xl bg-gray-50 flex items-center justify-center mt-8 overflow-hidden">
-        <div className="text-center text-gray-400">
-          <svg
-            className="h-24 w-auto max-w-full mx-auto text-gray-300"
-            viewBox="0 0 200 100"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <rect x="10" y="30" width={selectedVehicle.svgWidth * 1.5} height="40" rx="5" />
-            <rect x={selectedVehicle.cabX * 1.2} y="20" width="40" height="50" rx="5" />
-            <circle cx={selectedVehicle.wheel1 * 1.5} cy="75" r="10" />
-            <circle cx={selectedVehicle.wheel2 * 1.5} cy="75" r="10" />
-          </svg>
-          <p className="text-sm mt-2">Fourgon {selectedVehicle.label}</p>
-        </div>
+        <Image
+          src={movers === 1 ? selectedVehicle.imageSolo : selectedVehicle.imageDuo}
+          alt={`Fourgon ${selectedVehicle.label}`}
+          width={400}
+          height={200}
+          className="h-40 w-auto object-contain"
+        />
       </div>
 
       {/* Récapitulatif sélection */}

@@ -1,12 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronLeft, ArrowUp, ArrowDown, Truck, DollarSign, Calendar, Package, User, Pencil, Building } from "lucide-react";
+import {
+  useJsApiLoader,
+  Autocomplete,
+  GoogleMap,
+  Marker,
+  DirectionsRenderer,
+} from "@react-google-maps/api";
 import Step2Vehicle from "@/src/components/reservation/step2-vehicle";
 import Step3DateTime from "@/src/components/reservation/step3-datetime";
 import Step4Items from "@/src/components/reservation/step4-items";
 import Step5Access from "@/src/components/reservation/step5-access";
 import Step6Contact from "@/src/components/reservation/step6-contact";
+
+const GOOGLE_MAPS_LIBRARIES: ("places")[] = ["places"];
 
 const TOTAL_STEPS = 6;
 
@@ -40,6 +49,13 @@ const STEP_CONTENT = [
 export default function ReservationPage() {
   const [currentStep, setCurrentStep] = useState(1);
 
+  // Google Maps
+  const { isLoaded } = useJsApiLoader({
+    id: "google-map-script",
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
+    libraries: GOOGLE_MAPS_LIBRARIES,
+  });
+
   // État des adresses
   const [pickupAddress, setPickupAddress] = useState("");
   const [pickupApt, setPickupApt] = useState("");
@@ -47,6 +63,25 @@ export default function ReservationPage() {
   const [dropoffAddress, setDropoffAddress] = useState("");
   const [dropoffApt, setDropoffApt] = useState("");
   const [dropoffEditing, setDropoffEditing] = useState(true);
+
+  // Coordonnées GPS
+  const [pickupLat, setPickupLat] = useState(0);
+  const [pickupLng, setPickupLng] = useState(0);
+  const [dropoffLat, setDropoffLat] = useState(0);
+  const [dropoffLng, setDropoffLng] = useState(0);
+
+  // Route
+  const [routeMinutes, setRouteMinutes] = useState(30);
+  const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
+
+  // Autocomplete refs
+  const [autocompletePickup, setAutocompletePickup] = useState<google.maps.places.Autocomplete | null>(null);
+  const [autocompleteDropoff, setAutocompleteDropoff] = useState<google.maps.places.Autocomplete | null>(null);
+
+  // Map ref
+  const [map, setMap] = useState<google.maps.Map | null>(null);
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 48.8566, lng: 2.3522 });
+  const [mapZoom, setMapZoom] = useState(12);
 
   // État véhicule et livrizeurs
   const [vehicle, setVehicle] = useState("11m3");
@@ -77,6 +112,48 @@ export default function ReservationPage() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
 
+  // Calcul automatique de la route quand les 2 adresses sont définies
+  useEffect(() => {
+    if (!isLoaded || !pickupLat || !dropoffLat) return;
+
+    const directionsService = new google.maps.DirectionsService();
+    directionsService.route(
+      {
+        origin: { lat: pickupLat, lng: pickupLng },
+        destination: { lat: dropoffLat, lng: dropoffLng },
+        travelMode: google.maps.TravelMode.DRIVING,
+      },
+      (result, status) => {
+        if (status === "OK" && result) {
+          setDirections(result);
+          const minutes = Math.ceil(
+            result.routes[0].legs[0].duration!.value / 60
+          );
+          setRouteMinutes(minutes);
+        }
+      }
+    );
+  }, [isLoaded, pickupLat, pickupLng, dropoffLat, dropoffLng]);
+
+  // Recadrer la carte une seule fois quand le trajet change
+  useEffect(() => {
+    if (map && directions) {
+      const bounds = directions.routes[0].bounds;
+      if (bounds) {
+        map.fitBounds(bounds, { top: 60, right: 40, bottom: 20, left: 40 });
+        // Sauvegarder le centre et zoom après le fitBounds
+        setTimeout(() => {
+          const center = map.getCenter();
+          const zoom = map.getZoom();
+          if (center && zoom) {
+            setMapCenter({ lat: center.lat(), lng: center.lng() });
+            setMapZoom(zoom);
+          }
+        }, 300);
+      }
+    }
+  }, [map, directions]);
+
   // Formatage du véhicule pour le récap
   const getVehicleLabel = () => {
     if (currentStep < 2) return "—";
@@ -96,7 +173,6 @@ export default function ReservationPage() {
       "20m3": { solo: 1.38, duo: 1.7675 },
     };
     const rate = movers === 1 ? vehicleRates[vehicle].solo : vehicleRates[vehicle].duo;
-    const routeMinutes = 30; // Mock pour l'instant
     const M = routeMinutes + 30; // + 30 min manutention incluses
     const P_base = rate * M;
 
@@ -195,18 +271,6 @@ export default function ReservationPage() {
     }
   };
 
-  const handlePickupBlur = () => {
-    if (pickupAddress.trim() !== "") {
-      setPickupEditing(false);
-    }
-  };
-
-  const handleDropoffBlur = () => {
-    if (dropoffAddress.trim() !== "") {
-      setDropoffEditing(false);
-    }
-  };
-
   return (
     <div className="min-h-screen relative bg-white md:bg-[linear-gradient(to_right,#FAFAFA_50%,#FFFFFF_50%)]">
       {/* Header mobile */}
@@ -243,9 +307,59 @@ export default function ReservationPage() {
           {/* Titre */}
           <h2 className="text-[22px] font-semibold text-gray-900 mb-9">Votre Livrizi</h2>
 
-          {/* Carte placeholder */}
-          <div className="w-full h-[200px] rounded-[12px] bg-[#F3F4F6] mb-8 flex items-center justify-center">
-            <span className="text-gray-400 text-sm">Google Maps</span>
+          {/* Carte Google Maps */}
+          <div className="w-full h-[200px] rounded-[12px] overflow-hidden mb-8">
+            {isLoaded ? (
+              <GoogleMap
+                onLoad={(mapInstance) => setMap(mapInstance)}
+                mapContainerStyle={{ width: "100%", height: "100%" }}
+                center={mapCenter}
+                zoom={mapZoom}
+                options={{
+                  disableDefaultUI: true,
+                  zoomControl: false,
+                  draggable: false,
+                  scrollwheel: false,
+                  disableDoubleClickZoom: true,
+                  gestureHandling: "none",
+                  styles: [
+                    {
+                      featureType: "poi",
+                      stylers: [{ visibility: "off" }],
+                    },
+                  ],
+                }}
+              >
+                {pickupLat !== 0 && (
+                  <Marker
+                    position={{ lat: pickupLat, lng: pickupLng }}
+                    label={{ text: "A", color: "white", fontWeight: "bold" }}
+                  />
+                )}
+                {dropoffLat !== 0 && (
+                  <Marker
+                    position={{ lat: dropoffLat, lng: dropoffLng }}
+                    label={{ text: "B", color: "white", fontWeight: "bold" }}
+                  />
+                )}
+                {directions && (
+                  <DirectionsRenderer
+                    directions={directions}
+                    options={{
+                      suppressMarkers: true,
+                      polylineOptions: {
+                        strokeColor: "#3D4BA3",
+                        strokeWeight: 4,
+                      },
+                    }}
+                  />
+                )}
+              </GoogleMap>
+            ) : (
+              <div className="w-full h-full bg-[#F3F4F6] flex items-center justify-center">
+                <span className="text-gray-400 text-sm">Chargement de la carte...</span>
+              </div>
+            )}
           </div>
 
           {/* Récap timeline avec ligne verticale */}
@@ -325,45 +439,69 @@ export default function ReservationPage() {
                       <label className="block text-[14px] text-gray-600 font-medium">
                         Adresse de départ
                       </label>
-                    
-                    {pickupEditing ? (
-                      <input
-                        type="text"
-                        value={pickupAddress}
-                        onChange={(e) => setPickupAddress(e.target.value)}
-                        onBlur={handlePickupBlur}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            handlePickupBlur();
-                          }
-                        }}
-                        placeholder="Entrez l'adresse de départ"
-                        className="h-[52px] w-full rounded-[12px] border border-[#EDEEF1] bg-white px-4 text-[15px] placeholder:text-gray-400 focus:border-[#3D4BA3] focus:ring-4 focus:ring-[rgba(61,75,163,0.12)] outline-none transition-all"
-                      />
-                    ) : (
-                      <div className="flex items-start justify-between py-2">
-                        <div className="flex items-start gap-3 flex-1">
-                          <ArrowUp size={18} className="text-[#6B7280] mt-1 flex-shrink-0" />
-                          <div className="flex-1">
-                            <div className="text-[15px] font-semibold text-gray-900">
-                              {pickupAddress}
-                            </div>
-                            <div className="text-[13px] text-gray-400 mt-1">
-                              {pickupAddress}
+
+                      {pickupEditing ? (
+                        isLoaded ? (
+                          <Autocomplete
+                            onLoad={(auto) => setAutocompletePickup(auto)}
+                            onPlaceChanged={() => {
+                              if (autocompletePickup) {
+                                const place = autocompletePickup.getPlace();
+                                if (place.formatted_address && place.geometry?.location) {
+                                  setPickupAddress(place.formatted_address);
+                                  setPickupLat(place.geometry.location.lat());
+                                  setPickupLng(place.geometry.location.lng());
+                                  setPickupEditing(false);
+                                }
+                              }
+                            }}
+                            options={{
+                              componentRestrictions: { country: "fr" },
+                              types: ["address"],
+                            }}
+                          >
+                            <input
+                              type="text"
+                              value={pickupAddress}
+                              onChange={(e) => setPickupAddress(e.target.value)}
+                              placeholder="Entrez l'adresse de départ"
+                              className="h-[52px] w-full rounded-[12px] border border-[#EDEEF1] bg-white px-4 text-[15px] placeholder:text-gray-400 focus:border-[#3D4BA3] focus:ring-4 focus:ring-[rgba(61,75,163,0.12)] outline-none transition-all"
+                            />
+                          </Autocomplete>
+                        ) : (
+                          <input
+                            type="text"
+                            value={pickupAddress}
+                            onChange={(e) => setPickupAddress(e.target.value)}
+                            placeholder="Chargement..."
+                            disabled
+                            className="h-[52px] w-full rounded-[12px] border border-[#EDEEF1] bg-gray-50 px-4 text-[15px] placeholder:text-gray-400 outline-none"
+                          />
+                        )
+                      ) : (
+                        <div className="flex items-start justify-between py-2">
+                          <div className="flex items-start gap-3 flex-1">
+                            <ArrowUp size={18} className="text-[#6B7280] mt-1 flex-shrink-0" />
+                            <div className="flex-1">
+                              <div className="text-[15px] font-semibold text-gray-900">
+                                {pickupAddress.split(",")[0]}
+                              </div>
+                              <div className="text-[13px] text-gray-400 mt-1">
+                                {pickupAddress.split(",").slice(1).join(",").trim()}
+                              </div>
                             </div>
                           </div>
+                          <button
+                            type="button"
+                            onClick={() => setPickupEditing(true)}
+                            aria-label="Modifier l'adresse de départ"
+                            className="p-2 hover:bg-gray-50 rounded-lg transition-colors"
+                          >
+                            <Pencil size={16} className="text-gray-400 hover:text-gray-600" />
+                          </button>
                         </div>
-                        <button
-                          onClick={() => setPickupEditing(true)}
-                          aria-label="Modifier l'adresse de départ"
-                          className="p-2 hover:bg-gray-50 rounded-lg transition-colors"
-                        >
-                          <Pencil size={16} className="text-gray-400 hover:text-gray-600" />
-                        </button>
-                      </div>
-                    )}
+                      )}
 
-                      {/* Input appartement optionnel */}
                       <div className="relative">
                         <Building
                           size={18}
@@ -384,45 +522,69 @@ export default function ReservationPage() {
                       <label className="block text-[14px] text-gray-600 font-medium">
                         Adresse d'arrivée
                       </label>
-                    
-                    {dropoffEditing ? (
-                      <input
-                        type="text"
-                        value={dropoffAddress}
-                        onChange={(e) => setDropoffAddress(e.target.value)}
-                        onBlur={handleDropoffBlur}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            handleDropoffBlur();
-                          }
-                        }}
-                        placeholder="Entrez l'adresse d'arrivée"
-                        className="h-[52px] w-full rounded-[12px] border border-[#EDEEF1] bg-white px-4 text-[15px] placeholder:text-gray-400 focus:border-[#3D4BA3] focus:ring-4 focus:ring-[rgba(61,75,163,0.12)] outline-none transition-all"
-                      />
-                    ) : (
-                      <div className="flex items-start justify-between py-2">
-                        <div className="flex items-start gap-3 flex-1">
-                          <ArrowDown size={18} className="text-[#6B7280] mt-1 flex-shrink-0" />
-                          <div className="flex-1">
-                            <div className="text-[15px] font-semibold text-gray-900">
-                              {dropoffAddress}
-                            </div>
-                            <div className="text-[13px] text-gray-400 mt-1">
-                              {dropoffAddress}
+
+                      {dropoffEditing ? (
+                        isLoaded ? (
+                          <Autocomplete
+                            onLoad={(auto) => setAutocompleteDropoff(auto)}
+                            onPlaceChanged={() => {
+                              if (autocompleteDropoff) {
+                                const place = autocompleteDropoff.getPlace();
+                                if (place.formatted_address && place.geometry?.location) {
+                                  setDropoffAddress(place.formatted_address);
+                                  setDropoffLat(place.geometry.location.lat());
+                                  setDropoffLng(place.geometry.location.lng());
+                                  setDropoffEditing(false);
+                                }
+                              }
+                            }}
+                            options={{
+                              componentRestrictions: { country: "fr" },
+                              types: ["address"],
+                            }}
+                          >
+                            <input
+                              type="text"
+                              value={dropoffAddress}
+                              onChange={(e) => setDropoffAddress(e.target.value)}
+                              placeholder="Entrez l'adresse d'arrivée"
+                              className="h-[52px] w-full rounded-[12px] border border-[#EDEEF1] bg-white px-4 text-[15px] placeholder:text-gray-400 focus:border-[#3D4BA3] focus:ring-4 focus:ring-[rgba(61,75,163,0.12)] outline-none transition-all"
+                            />
+                          </Autocomplete>
+                        ) : (
+                          <input
+                            type="text"
+                            value={dropoffAddress}
+                            onChange={(e) => setDropoffAddress(e.target.value)}
+                            placeholder="Chargement..."
+                            disabled
+                            className="h-[52px] w-full rounded-[12px] border border-[#EDEEF1] bg-gray-50 px-4 text-[15px] placeholder:text-gray-400 outline-none"
+                          />
+                        )
+                      ) : (
+                        <div className="flex items-start justify-between py-2">
+                          <div className="flex items-start gap-3 flex-1">
+                            <ArrowDown size={18} className="text-[#6B7280] mt-1 flex-shrink-0" />
+                            <div className="flex-1">
+                              <div className="text-[15px] font-semibold text-gray-900">
+                                {dropoffAddress.split(",")[0]}
+                              </div>
+                              <div className="text-[13px] text-gray-400 mt-1">
+                                {dropoffAddress.split(",").slice(1).join(",").trim()}
+                              </div>
                             </div>
                           </div>
+                          <button
+                            type="button"
+                            onClick={() => setDropoffEditing(true)}
+                            aria-label="Modifier l'adresse d'arrivée"
+                            className="p-2 hover:bg-gray-50 rounded-lg transition-colors"
+                          >
+                            <Pencil size={16} className="text-gray-400 hover:text-gray-600" />
+                          </button>
                         </div>
-                        <button
-                          onClick={() => setDropoffEditing(true)}
-                          aria-label="Modifier l'adresse d'arrivée"
-                          className="p-2 hover:bg-gray-50 rounded-lg transition-colors"
-                        >
-                          <Pencil size={16} className="text-gray-400 hover:text-gray-600" />
-                        </button>
-                      </div>
-                    )}
+                      )}
 
-                      {/* Input appartement optionnel */}
                       <div className="relative">
                         <Building
                           size={18}
@@ -446,7 +608,7 @@ export default function ReservationPage() {
                     movers={movers}
                     onVehicleChange={setVehicle}
                     onMoversChange={setMovers}
-                    routeMinutes={30}
+                    routeMinutes={routeMinutes}
                   />
                 )}
 
@@ -484,7 +646,7 @@ export default function ReservationPage() {
                     onManutentionChange={setManutention}
                     vehicle={vehicle}
                     movers={movers}
-                    routeMinutes={30}
+                    routeMinutes={routeMinutes}
                   />
                 )}
 
