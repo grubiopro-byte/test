@@ -272,9 +272,9 @@ export default function ReservationPage() {
   };
 
   return (
-    <div className="min-h-screen relative bg-white md:bg-[linear-gradient(to_right,#FAFAFA_50%,#FFFFFF_50%)]">
+    <div className="min-h-screen min-h-[100dvh] relative bg-[#F7F7F8] md:bg-[linear-gradient(to_right,#FAFAFA_50%,#FFFFFF_50%)]">
       {/* Header mobile */}
-      <header className="md:hidden flex items-center justify-between px-5 pt-4 pb-2">
+      <header className="md:hidden flex items-center justify-between px-6 pt-5 pb-3">
         <h1 className="text-[22px] font-bold text-[#3D4BA3]">livrizi</h1>
         <button
           aria-label="Se connecter"
@@ -285,7 +285,7 @@ export default function ReservationPage() {
         </button>
       </header>
 
-      <div className="mx-auto flex max-w-[53rem] justify-center min-h-screen">
+      <div className="mx-auto flex max-w-[53rem] justify-center min-h-screen min-h-[100dvh]">
         {/* COLONNE GAUCHE — Récap "Votre Livrizi" */}
         <aside className="hidden md:flex relative w-full lg:max-w-[26.5rem] flex-col self-stretch px-6 pt-[max(100px,10vh)]">
           {/* Header avec logo et Se connecter */}
@@ -391,8 +391,8 @@ export default function ReservationPage() {
         </aside>
 
         {/* COLONNE DROITE — Formulaire */}
-        <aside className="relative w-full lg:max-w-[26.5rem]">
-          <div className="pb-[84px] lg:pb-0 pt-4 md:pt-8 lg:pt-10 px-5 md:px-6 lg:px-10">
+        <aside className="relative w-full lg:max-w-[26.5rem] px-4 md:px-0">
+          <div className="pb-[84px] lg:pb-0 pt-5 md:pt-8 lg:pt-10 px-5 md:px-6 lg:px-10 bg-white md:bg-transparent rounded-2xl md:rounded-none mb-4 md:mb-0">
             {/* Header stepper */}
             <header className="container mb-4 lg:mb-8">
               {/* Step indicator */}

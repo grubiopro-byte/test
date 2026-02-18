@@ -57,25 +57,25 @@ export default function Step2Vehicle({
       {/* Section sélection véhicule */}
       <div>
         {/* Cartes véhicules */}
-        <div className="flex gap-3 mt-8">
+        <div className="flex gap-3 mt-4">
           {vehicles.map((v) => (
             <button
               key={v.id}
               type="button"
               onClick={() => onVehicleChange(v.id)}
-              className={`flex-1 flex flex-col items-center gap-3 border rounded-xl p-5 transition cursor-pointer overflow-hidden ${
+              className={`flex-1 flex flex-col items-center gap-2 border rounded-xl p-3 transition cursor-pointer overflow-hidden ${
                 vehicle === v.id
                   ? "border-[#3D4BA3] border-2"
                   : "border-gray-200 hover:border-gray-300"
               }`}
             >
-              <div className="w-full h-20 flex items-center justify-center overflow-hidden">
+              <div className="w-full h-14 flex items-center justify-center overflow-hidden">
                 <Image
                   src={movers === 1 ? v.imageSolo : v.imageDuo}
                   alt={`Fourgon ${v.label}`}
                   width={160}
                   height={80}
-                  className="h-[72px] w-auto object-contain"
+                  className="h-[52px] w-auto object-contain"
                 />
               </div>
               <span className="font-medium text-sm">{v.label}</span>
