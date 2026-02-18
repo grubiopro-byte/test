@@ -1,6 +1,6 @@
-export const dynamic = "force-dynamic";
-
 "use client";
+
+export const dynamic = "force-dynamic";
 
 import { useState, useEffect } from "react";
 import { ChevronLeft, ArrowUp, ArrowDown, Truck, DollarSign, Calendar, Package, User, Pencil, Building } from "lucide-react";
