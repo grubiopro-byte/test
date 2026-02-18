@@ -9,7 +9,6 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
-import { supabase } from "@/lib/supabase";
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
@@ -96,9 +95,10 @@ function CheckoutForm({
       return;
     }
 
-    const { data, error: dbError } = await supabase
-      .from("missions")
-      .insert({
+    const res = await fetch("/api/save-mission", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         ...bookingData,
         customer_email: email,
         customer_phone: phone,
@@ -107,18 +107,18 @@ function CheckoutForm({
         stripe_payment_intent_id: paymentIntent?.id || "",
         status: "pending",
         payment_status: "authorized",
-      })
-      .select("id")
-      .single();
+      }),
+    });
 
-    if (dbError) {
-      console.error("Supabase error:", dbError);
-      setError("Paiement accepté mais erreur d'enregistrement. Contactez-nous.");
+    const result = await res.json();
+
+    if (!res.ok) {
+      setError("Erreur d'enregistrement. Contactez-nous.");
       setLoading(false);
       return;
     }
 
-    onBookingComplete(data.id);
+    onBookingComplete(result.id);
   };
 
   return (
@@ -271,9 +271,7 @@ export default function Step6Contact({
           {!verified && !codeSent && (
             <button
               type="button"
-              onClick={() => {
-                if (phone.trim().length >= 10) setCodeSent(true);
-              }}
+              onClick={() => { if (phone.trim().length >= 10) setCodeSent(true); }}
               disabled={phone.trim().length < 10}
               className={`w-full h-[48px] rounded-[12px] text-white text-[15px] font-medium mt-3 transition-colors ${
                 phone.trim().length >= 10
@@ -289,18 +287,14 @@ export default function Step6Contact({
               <input
                 type="text"
                 value={code}
-                onChange={(e) =>
-                  setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
-                }
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                 placeholder="Entrez le code à 6 chiffres"
                 className="h-[52px] w-full rounded-[12px] border border-[#EDEEF1] bg-white px-4 text-[15px] text-center tracking-[0.3em] placeholder:text-gray-400 placeholder:tracking-normal focus:border-[#3D4BA3] focus:ring-4 focus:ring-[rgba(61,75,163,0.12)] outline-none transition-all"
               />
               <div className="flex gap-3">
                 <button
                   type="button"
-                  onClick={() => {
-                    if (code.length === 6) setVerified(true);
-                  }}
+                  onClick={() => { if (code.length === 6) setVerified(true); }}
                   disabled={code.length !== 6}
                   className={`flex-1 h-[44px] rounded-[12px] text-white text-[14px] font-medium transition-colors ${
                     code.length === 6
@@ -312,10 +306,7 @@ export default function Step6Contact({
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    setCodeSent(false);
-                    setCode("");
-                  }}
+                  onClick={() => { setCodeSent(false); setCode(""); }}
                   className="h-[44px] px-4 rounded-[12px] border border-[#EDEEF1] text-[14px] text-gray-600 hover:bg-gray-50 transition-colors"
                 >
                   Renvoyer
@@ -370,30 +361,14 @@ export default function Step6Contact({
               fill="none"
               viewBox="0 0 24 24"
             >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-              />
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-            <span className="text-sm text-gray-400">
-              Chargement du paiement sécurisé...
-            </span>
+            <span className="text-sm text-gray-400">Chargement du paiement sécurisé...</span>
           </div>
         </div>
       ) : clientSecret ? (
-        <Elements
-          stripe={stripePromise}
-          options={{ clientSecret, appearance: stripeAppearance }}
-        >
+        <Elements stripe={stripePromise} options={{ clientSecret, appearance: stripeAppearance }}>
           <CheckoutForm
             canBook={canBook}
             priceTotal={priceTotal}
@@ -408,9 +383,7 @@ export default function Step6Contact({
         </Elements>
       ) : (
         <div className="mt-8 p-4 rounded-[12px] bg-red-50 border border-red-200">
-          <p className="text-sm text-red-600">
-            Impossible de charger le paiement. Veuillez réessayer.
-          </p>
+          <p className="text-sm text-red-600">Impossible de charger le paiement. Veuillez réessayer.</p>
         </div>
       )}
     </div>
