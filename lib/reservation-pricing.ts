@@ -43,9 +43,9 @@ export function computePrice(state: BookingState): PriceBreakdown {
   const routeMinutes = state.routeMinutes || 30;
   const mBase = routeMinutes + 30;
 
-  // Prix par type de véhicule (€/min)
+  // Prix par type de véhicule (€/min) — cohérents avec lib/pricing.ts (p11 × 0.85 / 1.0 / 1.20)
   const vehiclePrices = {
-    6: 0.98,
+    6: 0.9775,
     11: 1.15,
     20: 1.38,
   };

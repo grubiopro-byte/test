@@ -74,6 +74,7 @@ export default function ReservationPage() {
 
   // Route
   const [routeMinutes, setRouteMinutes] = useState(30);
+  const [routeMeters, setRouteMeters] = useState(0);
   const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
 
   // Autocomplete refs
@@ -128,10 +129,9 @@ export default function ReservationPage() {
       (result, status) => {
         if (status === "OK" && result) {
           setDirections(result);
-          const minutes = Math.ceil(
-            result.routes[0].legs[0].duration!.value / 60
-          );
-          setRouteMinutes(minutes);
+          const leg = result.routes[0].legs[0];
+          setRouteMinutes(Math.ceil(leg.duration!.value / 60));
+          setRouteMeters(leg.distance!.value);
         }
       }
     );
@@ -223,7 +223,8 @@ export default function ReservationPage() {
   // Formatage du créneau pour le récap
   const getScheduleLabel = () => {
     if (currentStep < 3) return "—";
-    const date = new Date(selectedDay);
+    // "T12:00:00" évite le décalage UTC qui peut changer le jour affiché
+    const date = new Date(selectedDay + "T12:00:00");
     const dayNames = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
     const monthNames = ["jan", "fév", "mar", "avr", "mai", "juin", "juil", "aoû", "sep", "oct", "nov", "déc"];
     const dayName = dayNames[date.getDay()];
@@ -770,7 +771,7 @@ export default function ReservationPage() {
                         destination_address: dropoffAddress,
                         destination_lat: dropoffLat,
                         destination_lng: dropoffLng,
-                        distance_km: routeMinutes / 60 * 30,
+                        distance_km: Math.round(routeMeters / 100) / 10,
                         duration_minutes: routeMinutes,
                         van_size: vehicle,
                         num_deliverers: movers,

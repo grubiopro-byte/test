@@ -232,9 +232,10 @@ export default function Step6Contact({
       .catch(() => setStripeLoading(false));
   }, [priceTotal]);
 
+  const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
   const canBook =
     phone.trim().length >= 10 &&
-    email.trim() !== "" &&
+    isValidEmail(email) &&
     firstName.trim() !== "" &&
     lastName.trim() !== "";
 
