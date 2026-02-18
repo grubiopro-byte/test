@@ -9,36 +9,70 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
+import { supabase } from "@/lib/supabase";
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 );
+
+interface BookingData {
+  origin_address: string;
+  origin_lat: number;
+  origin_lng: number;
+  destination_address: string;
+  destination_lat: number;
+  destination_lng: number;
+  distance_km: number;
+  duration_minutes: number;
+  van_size: string;
+  num_deliverers: number;
+  scheduled_date: string;
+  scheduled_slot: string;
+  items: { description: string };
+  access_origin: string;
+  access_destination: string;
+  pickup_floors: number;
+  dropoff_floors: number;
+  handling_option: string;
+  handling_minutes: number;
+  price_client: number;
+}
 
 interface Step6ContactProps {
   phone: string;
   email: string;
   firstName: string;
   lastName: string;
-  onPhoneChange: (phone: string) => void;
-  onEmailChange: (email: string) => void;
-  onFirstNameChange: (firstName: string) => void;
-  onLastNameChange: (lastName: string) => void;
+  onPhoneChange: (v: string) => void;
+  onEmailChange: (v: string) => void;
+  onFirstNameChange: (v: string) => void;
+  onLastNameChange: (v: string) => void;
   priceTotal: number;
   onBack: () => void;
-  onBookingComplete: () => void;
+  onBookingComplete: (missionId: string) => void;
+  bookingData: BookingData;
 }
 
-// ─── Inner form (a accès aux hooks Stripe) ───────────────────
 function CheckoutForm({
   canBook,
   priceTotal,
   onBack,
   onBookingComplete,
+  bookingData,
+  email,
+  phone,
+  firstName,
+  lastName,
 }: {
   canBook: boolean;
   priceTotal: number;
   onBack: () => void;
-  onBookingComplete: () => void;
+  onBookingComplete: (missionId: string) => void;
+  bookingData: BookingData;
+  email: string;
+  phone: string;
+  firstName: string;
+  lastName: string;
 }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -50,58 +84,70 @@ function CheckoutForm({
     setLoading(true);
     setError("");
 
-    const { error: stripeError } = await stripe.confirmPayment({
+    const { error: stripeError, paymentIntent } = await stripe.confirmPayment({
       elements,
-      confirmParams: {
-        return_url: window.location.origin + "/confirmation",
-      },
+      confirmParams: { return_url: window.location.origin + "/confirmation" },
       redirect: "if_required",
     });
 
     if (stripeError) {
       setError(stripeError.message || "Une erreur est survenue");
       setLoading(false);
-    } else {
-      onBookingComplete();
+      return;
     }
+
+    const { data, error: dbError } = await supabase
+      .from("missions")
+      .insert({
+        ...bookingData,
+        customer_email: email,
+        customer_phone: phone,
+        customer_first_name: firstName,
+        customer_last_name: lastName,
+        stripe_payment_intent_id: paymentIntent?.id || "",
+        status: "pending",
+        payment_status: "authorized",
+      })
+      .select("id")
+      .single();
+
+    if (dbError) {
+      console.error("Supabase error:", dbError);
+      setError("Paiement accepté mais erreur d'enregistrement. Contactez-nous.");
+      setLoading(false);
+      return;
+    }
+
+    onBookingComplete(data.id);
   };
 
   return (
     <>
-      {/* Formulaire Stripe */}
       <div className="mt-8">
         <label className="block text-[14px] font-medium text-gray-900 mb-3">
           Paiement sécurisé
         </label>
         <div className="border border-[#EDEEF1] rounded-[12px] p-4 bg-white">
-          <PaymentElement
-            options={{
-              layout: "tabs",
-            }}
-          />
+          <PaymentElement options={{ layout: "tabs" }} />
         </div>
-
-        {/* Message empreinte */}
         <div className="flex items-start gap-2 mt-3">
           <Lock size={14} className="text-[#3D4BA3] shrink-0 mt-0.5" />
           <p className="text-xs text-gray-500">
             Votre carte sera vérifiée mais{" "}
             <strong className="text-gray-700">
-              vous ne serez débité qu'à la fin de la prestation
+              vous ne serez débité qu&apos;à la fin de la prestation
             </strong>
             . Montant autorisé : {priceTotal.toFixed(2).replace(".", ",")} €
           </p>
         </div>
       </div>
 
-      {/* Erreur Stripe */}
       {error && (
         <div className="mt-4 p-3 rounded-[12px] bg-red-50 border border-red-200">
           <p className="text-sm text-red-600">{error}</p>
         </div>
       )}
 
-      {/* Boutons : Retour + Réserver */}
       <div className="flex space-x-3 pt-8 pb-3">
         <button
           type="button"
@@ -111,7 +157,6 @@ function CheckoutForm({
         >
           <ChevronLeft size={20} className="text-[#6B7280]" />
         </button>
-
         <button
           type="button"
           onClick={handleSubmit}
@@ -152,7 +197,6 @@ function CheckoutForm({
   );
 }
 
-// ─── Composant principal Step 6 ──────────────────────────────
 export default function Step6Contact({
   phone,
   email,
@@ -165,16 +209,14 @@ export default function Step6Contact({
   priceTotal,
   onBack,
   onBookingComplete,
+  bookingData,
 }: Step6ContactProps) {
   const [clientSecret, setClientSecret] = useState("");
   const [stripeLoading, setStripeLoading] = useState(true);
-
-  // Vérification téléphone
   const [codeSent, setCodeSent] = useState(false);
   const [code, setCode] = useState("");
   const [verified, setVerified] = useState(false);
 
-  // Créer le PaymentIntent au montage
   useEffect(() => {
     if (priceTotal <= 0) return;
     fetch("/api/create-payment-intent", {
@@ -189,20 +231,6 @@ export default function Step6Contact({
       })
       .catch(() => setStripeLoading(false));
   }, [priceTotal]);
-
-  const handleSendCode = () => {
-    if (phone.trim().length >= 10) {
-      setCodeSent(true);
-      // TODO: connecter à Supabase / Twilio pour l'envoi réel du SMS
-    }
-  };
-
-  const handleVerifyCode = () => {
-    if (code.length === 6) {
-      setVerified(true);
-      // TODO: vérifier le code côté serveur
-    }
-  };
 
   const canBook =
     phone.trim().length >= 10 &&
@@ -222,7 +250,6 @@ export default function Step6Contact({
   return (
     <div>
       <div className="space-y-8">
-        {/* Numéro de téléphone */}
         <div>
           <label className="block text-[14px] font-medium text-gray-900 mb-2">
             Numéro de téléphone
@@ -240,29 +267,13 @@ export default function Step6Contact({
               disabled={verified}
               className="h-[52px] w-full rounded-[12px] border border-[#EDEEF1] bg-white pl-11 pr-4 text-[15px] placeholder:text-gray-400 focus:border-[#3D4BA3] focus:ring-4 focus:ring-[rgba(61,75,163,0.12)] outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500"
             />
-            {verified && (
-              <svg
-                className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4.5 12.75l6 6 9-13.5"
-                />
-              </svg>
-            )}
           </div>
-
-          {/* Bouton Envoyer le code */}
           {!verified && !codeSent && (
             <button
               type="button"
-              onClick={handleSendCode}
+              onClick={() => {
+                if (phone.trim().length >= 10) setCodeSent(true);
+              }}
               disabled={phone.trim().length < 10}
               className={`w-full h-[48px] rounded-[12px] text-white text-[15px] font-medium mt-3 transition-colors ${
                 phone.trim().length >= 10
@@ -273,8 +284,6 @@ export default function Step6Contact({
               Envoyer le code de vérification
             </button>
           )}
-
-          {/* Champ code + vérifier/renvoyer */}
           {!verified && codeSent && (
             <div className="mt-3 space-y-3">
               <input
@@ -289,7 +298,9 @@ export default function Step6Contact({
               <div className="flex gap-3">
                 <button
                   type="button"
-                  onClick={handleVerifyCode}
+                  onClick={() => {
+                    if (code.length === 6) setVerified(true);
+                  }}
                   disabled={code.length !== 6}
                   className={`flex-1 h-[44px] rounded-[12px] text-white text-[14px] font-medium transition-colors ${
                     code.length === 6
@@ -314,7 +325,6 @@ export default function Step6Contact({
           )}
         </div>
 
-        {/* Adresse e-mail */}
         <div>
           <label className="block text-[14px] font-medium text-gray-900 mb-2">
             Adresse e-mail
@@ -328,7 +338,6 @@ export default function Step6Contact({
           />
         </div>
 
-        {/* Prénom et Nom */}
         <div>
           <label className="block text-[14px] font-medium text-gray-900 mb-2">
             Prénom et nom
@@ -352,7 +361,6 @@ export default function Step6Contact({
         </div>
       </div>
 
-      {/* Section Stripe */}
       {stripeLoading ? (
         <div className="mt-8 h-[120px] rounded-[12px] border border-[#EDEEF1] flex items-center justify-center bg-white">
           <div className="flex items-center gap-3">
@@ -384,16 +392,18 @@ export default function Step6Contact({
       ) : clientSecret ? (
         <Elements
           stripe={stripePromise}
-          options={{
-            clientSecret,
-            appearance: stripeAppearance,
-          }}
+          options={{ clientSecret, appearance: stripeAppearance }}
         >
           <CheckoutForm
             canBook={canBook}
             priceTotal={priceTotal}
             onBack={onBack}
             onBookingComplete={onBookingComplete}
+            bookingData={bookingData}
+            email={email}
+            phone={phone}
+            firstName={firstName}
+            lastName={lastName}
           />
         </Elements>
       ) : (

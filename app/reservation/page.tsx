@@ -758,9 +758,30 @@ export default function ReservationPage() {
                       onLastNameChange={setLastName}
                       priceTotal={calculatePrice().priceTotal}
                       onBack={handleBack}
-                      onBookingComplete={() => {
-                        // TODO: rediriger vers /confirmation
-                        alert("Réservation confirmée !");
+                      onBookingComplete={(missionId: string) => {
+                        window.location.href = `/confirmation?id=${missionId}`;
+                      }}
+                      bookingData={{
+                        origin_address: pickupAddress,
+                        origin_lat: pickupLat,
+                        origin_lng: pickupLng,
+                        destination_address: dropoffAddress,
+                        destination_lat: dropoffLat,
+                        destination_lng: dropoffLng,
+                        distance_km: routeMinutes / 60 * 30,
+                        duration_minutes: routeMinutes,
+                        van_size: vehicle,
+                        num_deliverers: movers,
+                        scheduled_date: selectedDay,
+                        scheduled_slot: selectedSlot,
+                        items: { description },
+                        access_origin: pickupAccess,
+                        access_destination: dropoffAccess,
+                        pickup_floors: pickupFloors,
+                        dropoff_floors: dropoffFloors,
+                        handling_option: manutention,
+                        handling_minutes: manutention === 'express' ? 0 : manutention === 'prolongee' ? 60 : manutention === 'prolongee_plus' ? 120 : 180,
+                        price_client: calculatePrice().priceTotal,
                       }}
                     />
                   </>
