@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
+import { Resend } from "resend";
+import { buildMissionConfirmationEmail } from "@/lib/emails/mission-confirmation";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2026-01-28.clover",
 });
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: NextRequest) {
   // Clé service role (sans NEXT_PUBLIC_) pour bypasser les RLS en server-side
@@ -64,6 +68,34 @@ export async function POST(req: NextRequest) {
       }
     }
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  // Envoi email de confirmation (best effort — n'échoue pas la requête)
+  try {
+    const { subject, html } = buildMissionConfirmationEmail({
+      missionId: data.id,
+      firstName: mission.customer_first_name,
+      lastName: mission.customer_last_name,
+      email: mission.customer_email,
+      phone: mission.customer_phone,
+      originAddress: mission.origin_address,
+      destinationAddress: mission.destination_address,
+      scheduledDate: mission.scheduled_date,
+      scheduledSlot: mission.scheduled_slot,
+      vanSize: mission.van_size,
+      numDeliverers: mission.num_deliverers,
+      priceClient: mission.price_client,
+      handlingOption: mission.handling_option,
+    });
+
+    await resend.emails.send({
+      from: "Livrizi <contact@livrizi.fr>",
+      to: mission.customer_email,
+      subject,
+      html,
+    });
+  } catch (emailError) {
+    console.error("Erreur envoi email confirmation:", emailError);
   }
 
   return NextResponse.json({ id: data.id });
