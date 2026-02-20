@@ -139,7 +139,6 @@ export default function ReservationPage() {
         origin: { lat: pickupLat, lng: pickupLng },
         destination: { lat: dropoffLat, lng: dropoffLng },
         travelMode: google.maps.TravelMode.DRIVING,
-        provideRouteAlternatives: true,
         ...(departureTime && {
           drivingOptions: {
             departureTime,
@@ -149,18 +148,13 @@ export default function ReservationPage() {
       },
       (result, status) => {
         if (status === "OK" && result) {
-          // Choisir la route la plus rapide en minutes (avec trafic si disponible)
-          let bestIdx = 0;
-          let bestDuration = Infinity;
-          result.routes.forEach((route, idx) => {
-            const secs = route.legs[0].duration_in_traffic?.value ?? route.legs[0].duration?.value ?? Infinity;
-            if (secs < bestDuration) { bestDuration = secs; bestIdx = idx; }
-          });
-          const bestLeg = result.routes[bestIdx].legs[0];
+          // Utiliser la route recommandée (index 0), identique à Google Maps
+          const leg = result.routes[0].legs[0];
+          const secs = leg.duration_in_traffic?.value ?? leg.duration?.value ?? 0;
           setDirections(result);
-          setBestRouteIndex(bestIdx);
-          setRouteMinutes(Math.ceil(bestDuration / 60));
-          setRouteMeters(bestLeg.distance!.value);
+          setBestRouteIndex(0);
+          setRouteMinutes(Math.round(secs / 60));
+          setRouteMeters(leg.distance!.value);
         }
       }
     );
