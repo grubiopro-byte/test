@@ -603,9 +603,7 @@ export default function ReservationPage() {
 
                 {currentStep === 2 && (
                   <Step2Vehicle
-                    vehicle={vehicle}
                     movers={movers}
-                    onVehicleChange={setVehicle}
                     onMoversChange={setMovers}
                     routeMinutes={routeMinutes}
                   />

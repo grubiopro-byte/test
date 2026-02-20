@@ -3,127 +3,63 @@
 import Image from "next/image";
 
 interface Step2VehicleProps {
-  vehicle: string;
   movers: 1 | 2;
-  onVehicleChange: (vehicleId: string) => void;
   onMoversChange: (movers: 1 | 2) => void;
   routeMinutes?: number;
 }
 
-const vehicles = [
-  {
-    id: "11m3",
-    label: "11m³",
-    description: "Idéal pour un studio ou une pièce complète.",
-    soloRate: 1.15,
-    duoRate: 1.5375,
-    imageSolo: "/images/vehicles/11m3-solo.png",
-    imageDuo: "/images/vehicles/11m3-duo.png",
-  },
-];
+const VEHICLE = {
+  id: "11m3",
+  label: "11m³",
+  description: "Idéal pour un studio ou une pièce complète.",
+  soloRate: 1.15,
+  duoRate: 1.5375,
+  imageSolo: "/images/vehicles/11m3-solo.png",
+  imageDuo: "/images/vehicles/11m3-duo.png",
+};
 
 export default function Step2Vehicle({
-  vehicle,
   movers,
-  onVehicleChange,
   onMoversChange,
   routeMinutes = 30,
 }: Step2VehicleProps) {
-  const selectedVehicle = vehicles.find((v) => v.id === vehicle) || vehicles[1];
-  const rate = movers === 1 ? selectedVehicle.soloRate : selectedVehicle.duoRate;
-  const M = routeMinutes + 30; // 30 min manutention incluses
+  const rate = movers === 1 ? VEHICLE.soloRate : VEHICLE.duoRate;
+  const M = routeMinutes + 30;
   const basePrice = rate * M;
 
   return (
-    <div className="space-y-10">
-      {/* Section sélection véhicule */}
-      <div>
-        {/* Cartes véhicules */}
-        <div className="flex gap-3 mt-4">
-          {vehicles.map((v) => (
-            <button
-              key={v.id}
-              type="button"
-              onClick={() => onVehicleChange(v.id)}
-              className={`flex-1 flex flex-col items-center gap-2 border rounded-xl p-3 transition cursor-pointer overflow-hidden ${
-                vehicle === v.id
-                  ? "border-[#3D4BA3] border-2"
-                  : "border-gray-200 hover:border-gray-300"
-              }`}
-            >
-              <div className="w-full h-14 flex items-center justify-center overflow-hidden">
-                <Image
-                  src={movers === 1 ? v.imageSolo : v.imageDuo}
-                  alt={`Fourgon ${v.label}`}
-                  width={160}
-                  height={80}
-                  className="h-[52px] w-auto object-contain"
-                />
-              </div>
-              <span className="font-medium text-sm">{v.label}</span>
-            </button>
-          ))}
-        </div>
+    <div className="space-y-6">
 
-        {/* Toggle livrizeur */}
-        <div className="flex items-center justify-between bg-gray-50 rounded-2xl p-5 mt-4">
-          <div>
-            <p className="font-bold text-base">Ajouter 1 livrizeur</p>
-            <p className="text-sm text-gray-600 mt-1">
-              Un 2e livrizeur pour vous aider. Recommandé pour les objets lourds.
-            </p>
-          </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={movers === 2 ? "true" : "false"}
-            aria-label="Ajouter un deuxième livrizeur"
-            onClick={() => onMoversChange(movers === 1 ? 2 : 1)}
-            className={`relative shrink-0 w-12 h-7 rounded-full transition ${
-              movers === 2 ? "bg-[#3D4BA3]" : "bg-gray-300"
-            }`}
-          >
-            <div
-              className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-sm transition-all ${
-                movers === 2 ? "left-[22px]" : "left-0.5"
-              }`}
-            />
-          </button>
-        </div>
-      </div>
-
-      {/* Illustration véhicule sélectionné */}
-      <div className="w-full h-48 rounded-2xl bg-gray-50 flex items-center justify-center mt-8 overflow-hidden">
+      {/* Illustration véhicule */}
+      <div className="w-full h-48 rounded-2xl bg-gray-50 flex items-center justify-center overflow-hidden">
         <Image
-          src={movers === 1 ? selectedVehicle.imageSolo : selectedVehicle.imageDuo}
-          alt={`Fourgon ${selectedVehicle.label}`}
+          src={movers === 1 ? VEHICLE.imageSolo : VEHICLE.imageDuo}
+          alt={`Fourgon ${VEHICLE.label}`}
           width={400}
           height={200}
           className="h-40 w-auto object-contain"
         />
       </div>
 
-      {/* Récapitulatif sélection */}
-      <div className="mt-6">
-        {/* Nom + badge */}
-        <div className="flex items-center gap-2 mb-2">
+      {/* Nom + prix */}
+      <div>
+        <div className="flex items-center gap-2 mb-1">
           <span className="text-lg font-semibold text-gray-900">
-            Fourgon {selectedVehicle.label}
+            Fourgon {VEHICLE.label}
           </span>
           <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
             {movers} Livrizeur{movers > 1 ? "s" : ""}
           </span>
         </div>
+        <p className="text-sm text-gray-500 mb-3">{VEHICLE.description}</p>
 
-        {/* Prix */}
-        <div className="flex items-center gap-2 mt-2">
+        <div className="flex items-center gap-2">
           <p>
             <span className="text-2xl font-bold">
               {basePrice.toFixed(2).replace(".", ",")} €
             </span>
             <span className="text-base font-bold">
-              {" "}
-              + {rate.toFixed(2).replace(".", ",")} €
+              {" "}+ {rate.toFixed(2).replace(".", ",")} €
             </span>
             <span className="text-base text-gray-600"> /min manutention</span>
           </p>
@@ -140,10 +76,34 @@ export default function Step2Vehicle({
             />
           </svg>
         </div>
-
-        {/* Description */}
-        <p className="text-base text-gray-600 mt-2">{selectedVehicle.description}</p>
       </div>
+
+      {/* Toggle livrizeur */}
+      <div className="flex items-center justify-between bg-gray-50 rounded-2xl p-5">
+        <div>
+          <p className="font-bold text-base">Ajouter 1 livrizeur</p>
+          <p className="text-sm text-gray-600 mt-1">
+            Un 2e livrizeur pour vous aider. Recommandé pour les objets lourds.
+          </p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={movers === 2 ? "true" : "false"}
+          aria-label="Ajouter un deuxième livrizeur"
+          onClick={() => onMoversChange(movers === 1 ? 2 : 1)}
+          className={`relative shrink-0 w-12 h-7 rounded-full transition ${
+            movers === 2 ? "bg-[#3D4BA3]" : "bg-gray-300"
+          }`}
+        >
+          <div
+            className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-sm transition-all ${
+              movers === 2 ? "left-[22px]" : "left-0.5"
+            }`}
+          />
+        </button>
+      </div>
+
     </div>
   );
 }
