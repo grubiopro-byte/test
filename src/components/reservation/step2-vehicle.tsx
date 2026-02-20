@@ -58,10 +58,6 @@ export default function Step2Vehicle({
             <span className="text-2xl font-bold">
               {basePrice.toFixed(2).replace(".", ",")} €
             </span>
-            <span className="text-base font-bold">
-              {" "}+ {rate.toFixed(2).replace(".", ",")} €
-            </span>
-            <span className="text-base text-gray-600"> /min manutention</span>
           </p>
           <svg
             xmlns="http://www.w3.org/2000/svg"
