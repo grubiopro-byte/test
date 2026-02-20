@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
     });
 
     await resend.emails.send({
-      from: "Livrizi <contact@livrizi.fr>",
+      from: "Livrizi <onboarding@resend.dev>",
       to: mission.customer_email,
       subject,
       html,
