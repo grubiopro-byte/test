@@ -121,21 +121,18 @@ export default function Step4Items({
         </div>
       </div>
 
-      {/* Section contact additionnel */}
+      {/* Section infos complémentaires */}
       <div>
         <label className="font-bold text-base block text-gray-900">
-          Contact additionnel{" "}
+          Infos complémentaires{" "}
           <span className="text-sm font-normal text-gray-400 ml-2">optionnel</span>
         </label>
-        <p className="text-sm text-gray-600 mt-1">
-          Partagez les mises à jour de votre livraison avec cette personne.
-        </p>
-        <input
-          type="tel"
+        <textarea
           value={additionalContact}
           onChange={(e) => onAdditionalContactChange(e.target.value)}
-          placeholder="Numéro de téléphone..."
-          className="mt-3 w-full border border-gray-400 rounded-xl px-4 py-3 text-base focus:outline-none focus:border-black hover:border-black transition placeholder:text-gray-600"
+          placeholder="Précisez quelque chose si besoin…"
+          rows={2}
+          className="mt-3 w-full border border-gray-400 rounded-xl px-4 py-3 text-base resize-none focus:outline-none focus:border-black hover:border-black transition placeholder:text-gray-600"
         />
       </div>
     </div>
