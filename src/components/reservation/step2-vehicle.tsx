@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useState } from "react";
 
 interface Step2VehicleProps {
   movers: 1 | 2;
@@ -23,9 +24,17 @@ export default function Step2Vehicle({
   onMoversChange,
   routeMinutes = 30,
 }: Step2VehicleProps) {
+  const [tooltipOpen, setTooltipOpen] = useState(false);
+
   const rate = movers === 1 ? VEHICLE.soloRate : VEHICLE.duoRate;
   const M = routeMinutes + 30;
   const basePrice = rate * M;
+
+  // Détail du prix
+  const prixBrut = rate / 1.2; // tarif hors frais Livrizi
+  const fraisLivrizi = basePrice - prixBrut * M;
+  const prixRoute = prixBrut * routeMinutes;
+  const prixManutention = prixBrut * 30;
 
   return (
     <div className="space-y-6">
@@ -59,18 +68,63 @@ export default function Step2Vehicle({
               {basePrice.toFixed(2).replace(".", ",")} €
             </span>
           </p>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            className="w-5 h-5 text-[rgb(36,50,138)]"
-          >
-            <path
-              fillRule="evenodd"
-              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-              clipRule="evenodd"
-            />
-          </svg>
+
+          {/* Infobulle */}
+          <div className="relative">
+            <button
+              type="button"
+              aria-label="Détail du prix"
+              onClick={() => setTooltipOpen((v) => !v)}
+              onMouseEnter={() => setTooltipOpen(true)}
+              onMouseLeave={() => setTooltipOpen(false)}
+              className="flex items-center justify-center"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                className="w-5 h-5 text-[rgb(36,50,138)]"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
+
+            {tooltipOpen && (
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-gray-900 text-white text-xs rounded-xl p-4 shadow-xl z-50">
+                {/* Flèche */}
+                <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+
+                <p className="font-semibold text-sm mb-3 text-white">Détail du prix estimé</p>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-gray-300">Trajet ({routeMinutes} min)</span>
+                    <span className="font-medium">{prixRoute.toFixed(2).replace(".", ",")} €</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-300">Manutention (30 min incluses)</span>
+                    <span className="font-medium">{prixManutention.toFixed(2).replace(".", ",")} €</span>
+                  </div>
+                  <div className="flex justify-between border-t border-gray-700 pt-2">
+                    <span className="text-gray-300">Frais Livrizi (20%)</span>
+                    <span className="font-medium">{fraisLivrizi.toFixed(2).replace(".", ",")} €</span>
+                  </div>
+                  <div className="flex justify-between border-t border-gray-600 pt-2">
+                    <span className="font-semibold text-white">Total estimé</span>
+                    <span className="font-bold text-white">{basePrice.toFixed(2).replace(".", ",")} €</span>
+                  </div>
+                </div>
+
+                <p className="text-gray-400 mt-3 text-[11px] leading-tight">
+                  Prix basé sur la durée de trajet estimée. Le montant final dépend de la durée réelle.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
