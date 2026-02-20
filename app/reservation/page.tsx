@@ -13,7 +13,7 @@ import {
 } from "@react-google-maps/api";
 import Step2Vehicle from "@/src/components/reservation/step2-vehicle";
 import Step3DateTime from "@/src/components/reservation/step3-datetime";
-import Step4Items from "@/src/components/reservation/step4-items";
+import Step4Items, { TRANSPORT_ITEMS } from "@/src/components/reservation/step4-items";
 import Step5Access from "@/src/components/reservation/step5-access";
 import Step6Contact from "@/src/components/reservation/step6-contact";
 
@@ -99,9 +99,10 @@ export default function ReservationPage() {
   const [selectedSlot, setSelectedSlot] = useState("8h - 9h");
 
   // État objets à transporter
-  const [description, setDescription] = useState("");
+  const [items, setItems] = useState<Record<string, number>>({});
+  const [itemOptions, setItemOptions] = useState<Record<string, string>>({});
   const [photos, setPhotos] = useState<File[]>([]);
-  const [additionalContact, setAdditionalContact] = useState("");
+  const [additionalInfo, setAdditionalInfo] = useState("");
 
   // État accès et manutention
   const [pickupAccess, setPickupAccess] = useState("pied_camion");
@@ -254,9 +255,13 @@ export default function ReservationPage() {
 
   // Formatage des objets pour le récap
   const getItemsLabel = () => {
-    if (currentStep < 4 || !description.trim()) return "—";
-    // Afficher les 30 premiers caractères + "..." si plus long
-    return description.length > 30 ? description.substring(0, 30) + "..." : description;
+    const entries = Object.entries(items).filter(([, qty]) => qty > 0);
+    if (entries.length === 0) return "—";
+    const labelMap = Object.fromEntries(TRANSPORT_ITEMS.map((i) => [i.key, i.label]));
+    const str = entries
+      .map(([key, qty]) => `${labelMap[key] ?? key}${qty > 1 ? ` ×${qty}` : ""}`)
+      .join(", ");
+    return str.length > 30 ? str.substring(0, 30) + "..." : str;
   };
 
   const RECAP_ITEMS = [
@@ -276,7 +281,7 @@ export default function ReservationPage() {
       return selectedDay !== "" && selectedSlot !== "";
     }
     if (currentStep === 4) {
-      return description.trim() !== "";
+      return Object.values(items).some((qty) => qty > 0);
     }
     return true;
   };
@@ -644,12 +649,14 @@ export default function ReservationPage() {
 
                 {currentStep === 4 && (
                   <Step4Items
-                    description={description}
+                    items={items}
+                    itemOptions={itemOptions}
                     photos={photos}
-                    additionalContact={additionalContact}
-                    onDescriptionChange={setDescription}
+                    additionalInfo={additionalInfo}
+                    onItemsChange={setItems}
+                    onItemOptionsChange={setItemOptions}
                     onPhotosChange={setPhotos}
-                    onAdditionalContactChange={setAdditionalContact}
+                    onAdditionalInfoChange={setAdditionalInfo}
                   />
                 )}
 
@@ -795,7 +802,7 @@ export default function ReservationPage() {
                         num_deliverers: movers,
                         scheduled_date: selectedDay,
                         scheduled_slot: selectedSlot,
-                        items: { description },
+                        items: { quantities: items, options: itemOptions, additionalInfo },
                         access_origin: pickupAccess,
                         access_destination: dropoffAccess,
                         pickup_floors: pickupFloors,

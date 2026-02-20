@@ -1,48 +1,120 @@
 "use client";
 
+export const TRANSPORT_ITEMS = [
+  { key: "canape",       label: "Canapé",        options: ["2 places", "3 places", "4 places", "6 places"] },
+  { key: "fauteuil",     label: "Fauteuil" },
+  { key: "lit",          label: "Lit",            options: ["1 place", "2 places"] },
+  { key: "armoire",      label: "Armoire" },
+  { key: "commode",      label: "Commode" },
+  { key: "table",        label: "Table à manger" },
+  { key: "table_basse",  label: "Table basse" },
+  { key: "bureau",       label: "Bureau" },
+  { key: "refrigerateur",label: "Réfrigérateur" },
+  { key: "lave_linge",   label: "Lave-linge" },
+  { key: "cartons",      label: "Cartons" },
+] as const;
+
 interface Step4ItemsProps {
-  description: string;
+  items: Record<string, number>;
+  itemOptions: Record<string, string>;
   photos: File[];
-  additionalContact: string;
-  onDescriptionChange: (description: string) => void;
+  additionalInfo: string;
+  onItemsChange: (items: Record<string, number>) => void;
+  onItemOptionsChange: (options: Record<string, string>) => void;
   onPhotosChange: (photos: File[]) => void;
-  onAdditionalContactChange: (contact: string) => void;
+  onAdditionalInfoChange: (info: string) => void;
 }
 
 export default function Step4Items({
-  description,
+  items,
+  itemOptions,
   photos,
-  additionalContact,
-  onDescriptionChange,
+  additionalInfo,
+  onItemsChange,
+  onItemOptionsChange,
   onPhotosChange,
-  onAdditionalContactChange,
+  onAdditionalInfoChange,
 }: Step4ItemsProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const newFiles = Array.from(e.target.files);
-      onPhotosChange([...photos, ...newFiles]);
+      onPhotosChange([...photos, ...Array.from(e.target.files)]);
     }
   };
 
   const removePhoto = (index: number) => {
-    const newPhotos = photos.filter((_, i) => i !== index);
-    onPhotosChange(newPhotos);
+    onPhotosChange(photos.filter((_, i) => i !== index));
+  };
+
+  const adjustQty = (key: string, delta: number) => {
+    const next = Math.max(0, (items[key] ?? 0) + delta);
+    onItemsChange({ ...items, [key]: next });
+    if (next === 0) {
+      const opts = { ...itemOptions };
+      delete opts[key];
+      onItemOptionsChange(opts);
+    }
   };
 
   return (
     <div className="space-y-10">
-      {/* Section description */}
+      {/* Liste des objets avec +/- */}
       <div>
         <label className="font-bold text-base block text-gray-900">
-          Description des objets
+          Objets à transporter
         </label>
-        <textarea
-          value={description}
-          onChange={(e) => onDescriptionChange(e.target.value)}
-          placeholder="Canapé, cartons, machine à laver..."
-          rows={3}
-          className="mt-3 w-full border border-gray-400 rounded-xl px-4 py-3 text-base resize-y focus:outline-none focus:border-black hover:border-black transition placeholder:text-gray-600"
-        />
+        <div className="mt-3 border border-gray-200 rounded-xl overflow-hidden divide-y divide-gray-100">
+          {TRANSPORT_ITEMS.map((item) => {
+            const qty = items[item.key] ?? 0;
+            const hasOptions = "options" in item;
+            return (
+              <div key={item.key} className="px-4 py-3 bg-white">
+                <div className="flex items-center justify-between">
+                  <span className="text-base text-gray-900">{item.label}</span>
+                  <div className="flex items-center gap-4">
+                    <button
+                      type="button"
+                      onClick={() => adjustQty(item.key, -1)}
+                      disabled={qty === 0}
+                      className={`w-8 h-8 rounded-full border flex items-center justify-center text-lg font-medium transition
+                        ${qty === 0
+                          ? "border-gray-200 text-gray-300 cursor-not-allowed"
+                          : "border-gray-400 text-gray-700 hover:border-black hover:text-black"}`}
+                    >
+                      −
+                    </button>
+                    <span className="w-4 text-center text-base font-medium">{qty}</span>
+                    <button
+                      type="button"
+                      onClick={() => adjustQty(item.key, +1)}
+                      className="w-8 h-8 rounded-full border border-gray-400 flex items-center justify-center text-lg font-medium transition hover:border-black hover:text-black"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                {/* Sous-options (ex: taille canapé, lit) */}
+                {hasOptions && qty >= 1 && (
+                  <div className="flex gap-2 mt-2 flex-wrap">
+                    {(item as typeof item & { options: readonly string[] }).options.map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => onItemOptionsChange({ ...itemOptions, [item.key]: opt })}
+                        className={`px-3 py-1 rounded-full text-sm border transition
+                          ${itemOptions[item.key] === opt
+                            ? "bg-black text-white border-black"
+                            : "border-gray-300 text-gray-600 hover:border-gray-500"}`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Section photos */}
@@ -81,7 +153,6 @@ export default function Step4Items({
             />
           </label>
 
-          {/* Preview des images uploadées */}
           {photos.length > 0 && (
             <div className="flex gap-2 mt-3 flex-wrap">
               {photos.map((photo, i) => (
@@ -107,11 +178,7 @@ export default function Step4Items({
                       strokeWidth={2}
                       stroke="currentColor"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M6 18L18 6M6 6l12 12"
-                      />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
                 </div>
@@ -121,21 +188,18 @@ export default function Step4Items({
         </div>
       </div>
 
-      {/* Section contact additionnel */}
+      {/* Infos supplémentaires */}
       <div>
         <label className="font-bold text-base block text-gray-900">
-          Contact additionnel{" "}
+          Infos supplémentaires{" "}
           <span className="text-sm font-normal text-gray-400 ml-2">optionnel</span>
         </label>
-        <p className="text-sm text-gray-600 mt-1">
-          Partagez les mises à jour de votre livraison avec cette personne.
-        </p>
-        <input
-          type="tel"
-          value={additionalContact}
-          onChange={(e) => onAdditionalContactChange(e.target.value)}
-          placeholder="Numéro de téléphone..."
-          className="mt-3 w-full border border-gray-400 rounded-xl px-4 py-3 text-base focus:outline-none focus:border-black hover:border-black transition placeholder:text-gray-600"
+        <textarea
+          value={additionalInfo}
+          onChange={(e) => onAdditionalInfoChange(e.target.value)}
+          placeholder="Précisez quelque chose si besoin..."
+          rows={2}
+          className="mt-3 w-full border border-gray-400 rounded-xl px-4 py-3 text-base resize-none focus:outline-none focus:border-black hover:border-black transition placeholder:text-gray-600"
         />
       </div>
     </div>
