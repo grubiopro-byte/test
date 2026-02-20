@@ -76,6 +76,7 @@ export default function ReservationPage() {
   const [routeMinutes, setRouteMinutes] = useState(30);
   const [routeMeters, setRouteMeters] = useState(0);
   const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
+  const [bestRouteIndex, setBestRouteIndex] = useState(0);
 
   // Autocomplete refs
   const [autocompletePickup, setAutocompletePickup] = useState<google.maps.places.Autocomplete | null>(null);
@@ -119,12 +120,17 @@ export default function ReservationPage() {
   useEffect(() => {
     if (!isLoaded || !pickupLat || !dropoffLat) return;
 
-    // Construire le departure_time si date et créneau sont choisis
+    // Utiliser le milieu du créneau comme heure de départ (ex: "10h - 11h" → 10:30)
     let departureTime: Date | undefined;
     if (selectedDay && selectedSlot) {
-      const hour = parseInt(selectedSlot.match(/^(\d+)h/)?.[1] ?? "8");
-      const d = new Date(`${selectedDay}T${String(hour).padStart(2, "0")}:00:00`);
-      if (d > new Date()) departureTime = d;
+      const match = selectedSlot.match(/^(\d+)h\s*-\s*(\d+)h/);
+      if (match) {
+        const totalMinutes = ((parseInt(match[1]) + parseInt(match[2])) / 2) * 60;
+        const hh = String(Math.floor(totalMinutes / 60)).padStart(2, "0");
+        const mm = String(totalMinutes % 60).padStart(2, "0");
+        const d = new Date(`${selectedDay}T${hh}:${mm}:00`);
+        if (d > new Date()) departureTime = d;
+      }
     }
 
     const directionsService = new google.maps.DirectionsService();
@@ -133,6 +139,7 @@ export default function ReservationPage() {
         origin: { lat: pickupLat, lng: pickupLng },
         destination: { lat: dropoffLat, lng: dropoffLng },
         travelMode: google.maps.TravelMode.DRIVING,
+        provideRouteAlternatives: true,
         ...(departureTime && {
           drivingOptions: {
             departureTime,
@@ -142,11 +149,18 @@ export default function ReservationPage() {
       },
       (result, status) => {
         if (status === "OK" && result) {
+          // Choisir la route la plus rapide en minutes (avec trafic si disponible)
+          let bestIdx = 0;
+          let bestDuration = Infinity;
+          result.routes.forEach((route, idx) => {
+            const secs = route.legs[0].duration_in_traffic?.value ?? route.legs[0].duration?.value ?? Infinity;
+            if (secs < bestDuration) { bestDuration = secs; bestIdx = idx; }
+          });
+          const bestLeg = result.routes[bestIdx].legs[0];
           setDirections(result);
-          const leg = result.routes[0].legs[0];
-          const duration = leg.duration_in_traffic ?? leg.duration;
-          setRouteMinutes(Math.ceil(duration!.value / 60));
-          setRouteMeters(leg.distance!.value);
+          setBestRouteIndex(bestIdx);
+          setRouteMinutes(Math.ceil(bestDuration / 60));
+          setRouteMeters(bestLeg.distance!.value);
         }
       }
     );
@@ -360,6 +374,7 @@ export default function ReservationPage() {
                   <DirectionsRenderer
                     directions={directions}
                     options={{
+                      routeIndex: bestRouteIndex,
                       suppressMarkers: true,
                       polylineOptions: {
                         strokeColor: "#3D4BA3",
