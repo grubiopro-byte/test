@@ -249,7 +249,7 @@ export default function ReservationPage() {
     if (currentStep === 1) {
       return pickupAddress.trim() !== "" && dropoffAddress.trim() !== "";
     }
-    if (currentStep === 3) {
+    if (currentStep === 2) {
       return selectedDay !== "" && selectedSlot !== "";
     }
     if (currentStep === 4) {
@@ -602,19 +602,19 @@ export default function ReservationPage() {
                 )}
 
                 {currentStep === 2 && (
-                  <Step2Vehicle
-                    movers={movers}
-                    onMoversChange={setMovers}
-                    routeMinutes={routeMinutes}
-                  />
-                )}
-
-                {currentStep === 3 && (
                   <Step3DateTime
                     selectedDay={selectedDay}
                     selectedSlot={selectedSlot}
                     onDayChange={setSelectedDay}
                     onSlotChange={setSelectedSlot}
+                  />
+                )}
+
+                {currentStep === 3 && (
+                  <Step2Vehicle
+                    movers={movers}
+                    onMoversChange={setMovers}
+                    routeMinutes={routeMinutes}
                   />
                 )}
 
