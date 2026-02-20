@@ -11,7 +11,7 @@ const ITEM_GROUPS: ItemGroup[] = [
   {
     label: "Salon",
     items: [
-      { key: "canape",      label: "Canapé",       options: ["2 places", "3 places", "4 places", "Méridienne"], question: "Quelle configuration ?" },
+      { key: "canape",      label: "Canapé",      options: ["2 places", "3 places", "4 places", "Méridienne"], question: "Quelle configuration ?" },
       { key: "fauteuil",    label: "Fauteuil" },
       { key: "tv",          label: "TV / Écran" },
       { key: "table_basse", label: "Table basse" },
@@ -27,8 +27,8 @@ const ITEM_GROUPS: ItemGroup[] = [
   {
     label: "Chambre",
     items: [
-      { key: "matelas", label: "Matelas",          options: ["1 place (90 cm)", "2 places (140 cm)", "2 places (160 cm)", "2 places (180 cm)"], question: "Quelle taille ?" },
-      { key: "lit",     label: "Lit (structure)",  options: ["1 place (90 cm)", "2 places (140 cm)", "2 places (160 cm)", "2 places (180 cm)"], question: "Quelle taille ?" },
+      { key: "matelas", label: "Matelas",         options: ["1 place (90 cm)", "2 places (140 cm)", "2 places (160 cm)", "2 places (180 cm)"], question: "Quelle taille ?" },
+      { key: "lit",     label: "Lit (structure)", options: ["1 place (90 cm)", "2 places (140 cm)", "2 places (160 cm)", "2 places (180 cm)"], question: "Quelle taille ?" },
       { key: "armoire", label: "Armoire / Placard" },
       { key: "commode", label: "Commode" },
     ],
@@ -41,17 +41,24 @@ const ITEM_GROUPS: ItemGroup[] = [
       { key: "seche_linge",   label: "Sèche-linge" },
     ],
   },
-  {
-    label: "Autres",
-    items: [
-      { key: "cartons", label: "Cartons" },
-      { key: "bureau",  label: "Bureau" },
-      { key: "divers",  label: "Divers", freeText: true, question: "Décrivez vos autres objets…" },
-    ],
-  },
 ];
 
-export const TRANSPORT_ITEMS: TransportItem[] = ITEM_GROUPS.flatMap((g) => g.items);
+const AUTRES_ITEMS: TransportItem[] = [
+  { key: "cartons", label: "Cartons" },
+  { key: "bureau",  label: "Bureau" },
+  { key: "divers",  label: "Divers", freeText: true, question: "Décrivez vos autres objets…" },
+];
+
+export const TRANSPORT_ITEMS: TransportItem[] = [
+  ...ITEM_GROUPS.flatMap((g) => g.items),
+  ...AUTRES_ITEMS,
+];
+
+// Paires côte à côte
+const GROUP_PAIRS: [ItemGroup, ItemGroup][] = [
+  [ITEM_GROUPS[0], ITEM_GROUPS[1]], // Salon | Salle à manger
+  [ITEM_GROUPS[2], ITEM_GROUPS[3]], // Chambre | Cuisine & Électro
+];
 
 interface Step4ItemsProps {
   items: Record<string, number>;
@@ -88,129 +95,143 @@ export default function Step4Items({
     }
   };
 
+  // Tous les items sélectionnés qui ont des précisions à remplir
+  const allWithPrecisions = TRANSPORT_ITEMS.filter(
+    (item) => (items[item.key] ?? 0) >= 1 && ("options" in item || "freeText" in item)
+  ) as (TransportItem & ({ options: string[]; question: string } | { freeText: true; question: string }))[];
+
+  const renderChip = (item: TransportItem) => {
+    const qty = items[item.key] ?? 0;
+    const isFreeText = "freeText" in item;
+
+    if (qty === 0) {
+      return (
+        <button
+          key={item.key}
+          type="button"
+          onClick={() => adjustQty(item.key, 1)}
+          className="flex items-center gap-1 px-3 py-1.5 rounded-full border border-gray-300 text-gray-600 text-sm hover:border-gray-700 hover:text-gray-900 transition"
+        >
+          <span className="text-gray-400 text-xs leading-none">+</span>
+          {item.label}
+        </button>
+      );
+    }
+
+    if (isFreeText) {
+      return (
+        <div key={item.key} className="flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-full bg-black text-white text-sm">
+          <span className="font-medium">{item.label}</span>
+          <button
+            type="button"
+            onClick={() => adjustQty(item.key, -1)}
+            className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition text-xs"
+            aria-label="Retirer"
+          >
+            ✕
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div key={item.key} className="flex items-center gap-1.5 pl-2 pr-2.5 py-1.5 rounded-full bg-black text-white text-sm">
+        <button
+          type="button"
+          onClick={() => adjustQty(item.key, -1)}
+          className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition text-sm leading-none"
+        >
+          −
+        </button>
+        <span className="font-medium">
+          {item.label}
+          {qty > 1 && <span className="ml-1 opacity-60">×{qty}</span>}
+        </span>
+        <button
+          type="button"
+          onClick={() => adjustQty(item.key, 1)}
+          className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition text-sm leading-none"
+        >
+          +
+        </button>
+      </div>
+    );
+  };
+
   return (
-    <div className="space-y-10">
-      {/* Groupes d'objets */}
+    <div className="space-y-8">
+      {/* Objets */}
       <div>
         <label className="font-bold text-base block text-gray-900">Objets à transporter</label>
         <p className="text-sm text-gray-500 mt-1">Ajoutez ce que vous souhaitez transporter.</p>
 
-        <div className="mt-5 space-y-5">
-          {ITEM_GROUPS.map((group) => {
-            const selectedInGroup = group.items.filter(
-              (item) => (items[item.key] ?? 0) >= 1 && ("options" in item || "freeText" in item)
-            ) as (TransportItem & ({ options: string[]; question: string } | { freeText: true; question: string }))[];
-
-            return (
-              <div key={group.label}>
-                {/* Header groupe */}
-                <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2">
-                  {group.label}
-                </p>
-
-                {/* Chips */}
-                <div className="flex flex-wrap gap-2">
-                  {group.items.map((item) => {
-                    const qty = items[item.key] ?? 0;
-                    const isFreeText = "freeText" in item;
-
-                    if (qty === 0) {
-                      return (
-                        <button
-                          key={item.key}
-                          type="button"
-                          onClick={() => adjustQty(item.key, 1)}
-                          className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-gray-300 text-gray-700 text-sm hover:border-gray-800 hover:text-gray-900 transition"
-                        >
-                          <span className="text-gray-400 leading-none">+</span>
-                          {item.label}
-                        </button>
-                      );
-                    }
-
-                    if (isFreeText) {
-                      return (
-                        <div key={item.key} className="flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-full bg-black text-white text-sm">
-                          <span className="font-medium">{item.label}</span>
-                          <button
-                            type="button"
-                            onClick={() => adjustQty(item.key, -1)}
-                            className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition text-xs"
-                            aria-label="Retirer"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      );
-                    }
-
-                    return (
-                      <div key={item.key} className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full bg-black text-white text-sm">
-                        <button
-                          type="button"
-                          onClick={() => adjustQty(item.key, -1)}
-                          className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition text-base leading-none"
-                        >
-                          −
-                        </button>
-                        <span className="font-medium">
-                          {item.label}
-                          {qty > 1 && <span className="ml-1 opacity-60">×{qty}</span>}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => adjustQty(item.key, 1)}
-                          className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition text-base leading-none"
-                        >
-                          +
-                        </button>
-                      </div>
-                    );
-                  })}
+        <div className="mt-4 space-y-3">
+          {/* Rangées 2 colonnes */}
+          {GROUP_PAIRS.map(([left, right]) => (
+            <div key={left.label + right.label} className="grid grid-cols-2 gap-3">
+              {[left, right].map((group) => (
+                <div key={group.label} className="bg-gray-50 rounded-2xl p-4">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
+                    {group.label}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {group.items.map(renderChip)}
+                  </div>
                 </div>
+              ))}
+            </div>
+          ))}
 
-                {/* Sous-options du groupe */}
-                {selectedInGroup.length > 0 && (
-                  <div className="mt-3 space-y-3">
-                    {selectedInGroup.map((item) => (
-                      <div key={item.key} className="bg-gray-50 rounded-xl px-4 py-3">
-                        <p className="text-sm font-medium text-gray-700 mb-2">
-                          <span className="text-gray-400 mr-1">{item.label} —</span>
-                          {item.question}
-                        </p>
-                        {"options" in item ? (
-                          <div className="flex gap-2 flex-wrap">
-                            {item.options.map((opt) => (
-                              <button
-                                key={opt}
-                                type="button"
-                                onClick={() => onItemOptionsChange({ ...itemOptions, [item.key]: opt })}
-                                className={`px-3 py-1.5 rounded-full text-sm border transition
-                                  ${itemOptions[item.key] === opt
-                                    ? "bg-black text-white border-black"
-                                    : "border-gray-300 text-gray-600 hover:border-gray-600"}`}
-                              >
-                                {opt}
-                              </button>
-                            ))}
-                          </div>
-                        ) : (
-                          <textarea
-                            value={itemOptions[item.key] ?? ""}
-                            onChange={(e) => onItemOptionsChange({ ...itemOptions, [item.key]: e.target.value })}
-                            placeholder={item.question}
-                            rows={2}
-                            className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm resize-none focus:outline-none focus:border-black hover:border-gray-500 transition placeholder:text-gray-400"
-                          />
-                        )}
-                      </div>
+          {/* Autres — ligne simple, sans carte */}
+          <div className="pt-1">
+            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2">
+              Autres
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {AUTRES_ITEMS.map(renderChip)}
+            </div>
+          </div>
+        </div>
+
+        {/* Précisions pour les items sélectionnés */}
+        {allWithPrecisions.length > 0 && (
+          <div className="mt-5 space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">Précisions</p>
+            {allWithPrecisions.map((item) => (
+              <div key={item.key} className="bg-gray-50 rounded-xl px-4 py-3">
+                <p className="text-sm font-medium text-gray-700 mb-2">
+                  <span className="text-gray-400 mr-1">{item.label} —</span>
+                  {item.question}
+                </p>
+                {"options" in item ? (
+                  <div className="flex gap-2 flex-wrap">
+                    {item.options.map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => onItemOptionsChange({ ...itemOptions, [item.key]: opt })}
+                        className={`px-3 py-1.5 rounded-full text-sm border transition
+                          ${itemOptions[item.key] === opt
+                            ? "bg-black text-white border-black"
+                            : "border-gray-300 text-gray-600 hover:border-gray-600"}`}
+                      >
+                        {opt}
+                      </button>
                     ))}
                   </div>
+                ) : (
+                  <textarea
+                    value={itemOptions[item.key] ?? ""}
+                    onChange={(e) => onItemOptionsChange({ ...itemOptions, [item.key]: e.target.value })}
+                    placeholder={item.question}
+                    rows={2}
+                    className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-sm resize-none focus:outline-none focus:border-black hover:border-gray-500 transition placeholder:text-gray-400"
+                  />
                 )}
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Photos */}
