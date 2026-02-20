@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
 import { Resend } from "resend";
-import { buildMissionConfirmationEmail } from "@/lib/emails/mission-confirmation";
+import { buildMissionConfirmationEmail, buildAdminNotificationEmail } from "@/lib/emails/mission-confirmation";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2026-01-28.clover",
@@ -70,9 +70,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Envoi email de confirmation (best effort — n'échoue pas la requête)
+  // Envoi emails (best effort — n'échoue pas la requête)
   try {
-    const { subject, html } = buildMissionConfirmationEmail({
+    const emailData = {
       missionId: data.id,
       firstName: mission.customer_first_name,
       lastName: mission.customer_last_name,
@@ -86,16 +86,27 @@ export async function POST(req: NextRequest) {
       numDeliverers: mission.num_deliverers,
       priceClient: mission.price_client,
       handlingOption: mission.handling_option,
-    });
+    };
 
-    await resend.emails.send({
-      from: "Livrizi <onboarding@resend.dev>",
-      to: mission.customer_email,
-      subject,
-      html,
-    });
+    const clientEmail = buildMissionConfirmationEmail(emailData);
+    const adminEmail = buildAdminNotificationEmail(emailData);
+
+    await Promise.allSettled([
+      resend.emails.send({
+        from: "Livrizi <onboarding@resend.dev>",
+        to: mission.customer_email,
+        subject: clientEmail.subject,
+        html: clientEmail.html,
+      }),
+      resend.emails.send({
+        from: "Livrizi <onboarding@resend.dev>",
+        to: "contact@livrizi.fr",
+        subject: adminEmail.subject,
+        html: adminEmail.html,
+      }),
+    ]);
   } catch (emailError) {
-    console.error("Erreur envoi email confirmation:", emailError);
+    console.error("Erreur envoi emails:", emailError);
   }
 
   return NextResponse.json({ id: data.id });

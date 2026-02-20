@@ -186,3 +186,161 @@ export function buildMissionConfirmationEmail(data: MissionEmailData): {
 
   return { subject, html };
 }
+
+export function buildAdminNotificationEmail(data: MissionEmailData): {
+  subject: string;
+  html: string;
+} {
+  const subject = `[Nouvelle mission] #${data.missionId.slice(0, 8).toUpperCase()} – ${data.firstName} ${data.lastName}`;
+
+  const html = `
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>${subject}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#F7F7F8;font-family:Inter,system-ui,sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F7F7F8;padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
+
+          <!-- Header -->
+          <tr>
+            <td align="center" style="padding-bottom:28px;">
+              <span style="font-size:26px;font-weight:800;color:#3D4BA3;letter-spacing:-0.5px;">Livrizi</span>
+              <p style="margin:4px 0 0;font-size:12px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.8px;">Notification admin</p>
+            </td>
+          </tr>
+
+          <!-- Card -->
+          <tr>
+            <td style="background:#ffffff;border-radius:16px;border:1px solid #EDEEF1;padding:36px 32px;">
+
+              <!-- Titre -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+                <tr>
+                  <td>
+                    <h1 style="margin:0;font-size:20px;font-weight:700;color:#111827;">🆕 Nouvelle mission reçue</h1>
+                    <p style="margin:6px 0 0;font-size:14px;color:#6B7280;">Une réservation vient d'être confirmée et le paiement autorisé.</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- ID mission -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+                <tr>
+                  <td style="background:rgba(61,75,163,0.06);border-radius:10px;padding:14px 18px;text-align:center;">
+                    <p style="margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:#9CA3AF;">ID Mission</p>
+                    <p style="margin:0;font-size:15px;font-family:monospace;font-weight:600;color:#3D4BA3;">${data.missionId}</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Client -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+                <tr>
+                  <td colspan="2" style="padding-bottom:10px;">
+                    <p style="margin:0;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:#9CA3AF;">Client</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;border-top:1px solid #F3F4F6;">
+                    <p style="margin:0;font-size:12px;color:#9CA3AF;">Nom</p>
+                    <p style="margin:4px 0 0;font-size:14px;color:#111827;font-weight:600;">${data.firstName} ${data.lastName}</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;border-top:1px solid #F3F4F6;">
+                    <p style="margin:0;font-size:12px;color:#9CA3AF;">Email</p>
+                    <p style="margin:4px 0 0;font-size:14px;color:#3D4BA3;"><a href="mailto:${data.email}" style="color:#3D4BA3;text-decoration:none;">${data.email}</a></p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;border-top:1px solid #F3F4F6;">
+                    <p style="margin:0;font-size:12px;color:#9CA3AF;">Téléphone</p>
+                    <p style="margin:4px 0 0;font-size:14px;color:#111827;"><a href="tel:${data.phone}" style="color:#111827;text-decoration:none;">${data.phone}</a></p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Mission -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+                <tr>
+                  <td colspan="2" style="padding-bottom:10px;">
+                    <p style="margin:0;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:#9CA3AF;">Détails mission</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;border-top:1px solid #F3F4F6;">
+                    <p style="margin:0;font-size:12px;color:#9CA3AF;">Départ</p>
+                    <p style="margin:4px 0 0;font-size:14px;color:#111827;">${data.originAddress}</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;border-top:1px solid #F3F4F6;">
+                    <p style="margin:0;font-size:12px;color:#9CA3AF;">Arrivée</p>
+                    <p style="margin:4px 0 0;font-size:14px;color:#111827;">${data.destinationAddress}</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;border-top:1px solid #F3F4F6;">
+                    <p style="margin:0;font-size:12px;color:#9CA3AF;">Date & créneau</p>
+                    <p style="margin:4px 0 0;font-size:14px;color:#111827;">${formatDate(data.scheduledDate)} · ${data.scheduledSlot}</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;border-top:1px solid #F3F4F6;">
+                    <p style="margin:0;font-size:12px;color:#9CA3AF;">Véhicule & équipe</p>
+                    <p style="margin:4px 0 0;font-size:14px;color:#111827;">${formatVanSize(data.vanSize)} · ${data.numDeliverers} livrizeur${data.numDeliverers > 1 ? "s" : ""}</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;border-top:1px solid #F3F4F6;">
+                    <p style="margin:0;font-size:12px;color:#9CA3AF;">Manutention</p>
+                    <p style="margin:4px 0 0;font-size:14px;color:#111827;">${formatHandling(data.handlingOption)}</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0;border-top:1px solid #F3F4F6;border-bottom:1px solid #F3F4F6;">
+                    <p style="margin:0;font-size:12px;color:#9CA3AF;">Montant autorisé</p>
+                    <p style="margin:4px 0 0;font-size:18px;font-weight:700;color:#111827;">${data.priceClient.toFixed(2).replace(".", ",")} €</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Rappel action -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:10px;padding:14px 16px;">
+                    <p style="margin:0;font-size:13px;color:#92400E;">
+                      ⚡ <strong>Action requise :</strong> assigner un livrizeur disponible à cette mission.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding-top:24px;">
+              <p style="margin:0;font-size:11px;color:#D1D5DB;">Livrizi · Notification interne</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
+  `.trim();
+
+  return { subject, html };
+}
