@@ -12,15 +12,6 @@ interface Step2VehicleProps {
 
 const vehicles = [
   {
-    id: "6m3",
-    label: "6m³",
-    description: "Idéal pour quelques meubles ou cartons.",
-    soloRate: 0.9775,
-    duoRate: 1.365,
-    imageSolo: "/images/vehicles/6m3-solo.png",
-    imageDuo: "/images/vehicles/6m3-duo.png",
-  },
-  {
     id: "11m3",
     label: "11m³",
     description: "Idéal pour un studio ou une pièce complète.",
@@ -28,15 +19,6 @@ const vehicles = [
     duoRate: 1.5375,
     imageSolo: "/images/vehicles/11m3-solo.png",
     imageDuo: "/images/vehicles/11m3-duo.png",
-  },
-  {
-    id: "20m3",
-    label: "20m³",
-    description: "Idéal pour un appartement T2 ou plus.",
-    soloRate: 1.38,
-    duoRate: 1.7675,
-    imageSolo: "/images/vehicles/20m3-solo.png",
-    imageDuo: "/images/vehicles/20m3-duo.png",
   },
 ];
 

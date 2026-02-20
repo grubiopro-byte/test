@@ -160,9 +160,7 @@ export default function ReservationPage() {
   const getVehicleLabel = () => {
     if (currentStep < 2) return "—";
     const vehicleLabels: Record<string, string> = {
-      "6m3": "6m³",
       "11m3": "11m³",
-      "20m3": "20m³",
     };
     return `Fourgon ${vehicleLabels[vehicle]} • ${movers} Livrizeur${movers > 1 ? "s" : ""}`;
   };
@@ -170,9 +168,7 @@ export default function ReservationPage() {
   // Calcul du prix
   const calculatePrice = () => {
     const vehicleRates: Record<string, { solo: number; duo: number }> = {
-      "6m3": { solo: 0.9775, duo: 1.365 },
       "11m3": { solo: 1.15, duo: 1.5375 },
-      "20m3": { solo: 1.38, duo: 1.7675 },
     };
     const rate = movers === 1 ? vehicleRates[vehicle].solo : vehicleRates[vehicle].duo;
     const M = routeMinutes + 30; // + 30 min manutention incluses
