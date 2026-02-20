@@ -129,7 +129,7 @@ export default function ReservationPage() {
         const hh = String(Math.floor(totalMinutes / 60)).padStart(2, "0");
         const mm = String(totalMinutes % 60).padStart(2, "0");
         const d = new Date(`${selectedDay}T${hh}:${mm}:00`);
-        if (d > new Date()) departureTime = d;
+        departureTime = d > new Date() ? d : new Date();
       }
     }
 
