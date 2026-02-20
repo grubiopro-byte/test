@@ -27,12 +27,12 @@ const STEP_CONTENT = [
     subtitle: "Entrez vos adresses de départ et d'arrivée",
   },
   {
-    title: "Véhicule",
-    subtitle: "Choisissez le véhicule adapté à votre livraison",
-  },
-  {
     title: "Date & heure",
     subtitle: "Choisissez l'heure d'arrivée souhaitée",
+  },
+  {
+    title: "Véhicule",
+    subtitle: "Choisissez le véhicule adapté à votre livraison",
   },
   {
     title: "Objets à transporter",
@@ -115,9 +115,17 @@ export default function ReservationPage() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
 
-  // Calcul automatique de la route quand les 2 adresses sont définies
+  // Calcul automatique de la route (avec trafic si date+créneau connus)
   useEffect(() => {
     if (!isLoaded || !pickupLat || !dropoffLat) return;
+
+    // Construire le departure_time si date et créneau sont choisis
+    let departureTime: Date | undefined;
+    if (selectedDay && selectedSlot) {
+      const hour = parseInt(selectedSlot.match(/^(\d+)h/)?.[1] ?? "8");
+      const d = new Date(`${selectedDay}T${String(hour).padStart(2, "0")}:00:00`);
+      if (d > new Date()) departureTime = d;
+    }
 
     const directionsService = new google.maps.DirectionsService();
     directionsService.route(
@@ -125,17 +133,24 @@ export default function ReservationPage() {
         origin: { lat: pickupLat, lng: pickupLng },
         destination: { lat: dropoffLat, lng: dropoffLng },
         travelMode: google.maps.TravelMode.DRIVING,
+        ...(departureTime && {
+          drivingOptions: {
+            departureTime,
+            trafficModel: google.maps.TrafficModel.BEST_GUESS,
+          },
+        }),
       },
       (result, status) => {
         if (status === "OK" && result) {
           setDirections(result);
           const leg = result.routes[0].legs[0];
-          setRouteMinutes(Math.ceil(leg.duration!.value / 60));
+          const duration = leg.duration_in_traffic ?? leg.duration;
+          setRouteMinutes(Math.ceil(duration!.value / 60));
           setRouteMeters(leg.distance!.value);
         }
       }
     );
-  }, [isLoaded, pickupLat, pickupLng, dropoffLat, dropoffLng]);
+  }, [isLoaded, pickupLat, pickupLng, dropoffLat, dropoffLng, selectedDay, selectedSlot]);
 
   // Recadrer la carte une seule fois quand le trajet change
   useEffect(() => {
