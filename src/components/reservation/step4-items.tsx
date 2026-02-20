@@ -182,16 +182,13 @@ export default function Step4Items({
     <div className="space-y-8">
       {/* Objets */}
       <div>
-        <label className="font-bold text-base block text-gray-900">Objets à transporter</label>
-        <p className="text-sm text-gray-400 mt-1">Sélectionnez ce que vous souhaitez transporter.</p>
-
-        <div className="mt-5 space-y-6">
+        <div className="space-y-6">
           {/* Rangées 2 colonnes */}
           {[[ITEM_GROUPS[0], ITEM_GROUPS[1]], [ITEM_GROUPS[2], ITEM_GROUPS[3]]].map(([left, right]) => (
             <div key={left.label} className="grid grid-cols-2 gap-x-8 gap-y-2">
               {[left, right].map((group) => (
                 <div key={group.label}>
-                  <p className="text-sm font-medium text-gray-400 mb-3">
+                  <p className="text-base font-semibold text-gray-800 mb-3">
                     {group.emoji} {group.label}
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -207,7 +204,7 @@ export default function Step4Items({
 
           {/* Autres — ligne simple */}
           <div>
-            <p className="text-sm font-medium text-gray-400 mb-3">📦 Autres</p>
+            <p className="text-base font-semibold text-gray-800 mb-3">📦 Autres</p>
             <div className="flex flex-wrap gap-2">
               {AUTRES_ITEMS.map(renderItemBlock)}
             </div>
