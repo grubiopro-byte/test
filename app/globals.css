@@ -49,7 +49,7 @@ body {
   margin: 0;
   padding: 0;
   overscroll-behavior: none;
-  overflow-x: hidden;
+  overflow-x: clip;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
