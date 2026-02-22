@@ -11,6 +11,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: NextRequest) {
+  try {
   // Clé service role (sans NEXT_PUBLIC_) pour bypasser les RLS en server-side
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -110,4 +111,8 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({ id: data.id });
+  } catch (err) {
+    console.error("Erreur inattendue save-mission:", err);
+    return NextResponse.json({ error: String(err) }, { status: 500 });
+  }
 }

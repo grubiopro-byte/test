@@ -95,30 +95,36 @@ function CheckoutForm({
       return;
     }
 
-    const res = await fetch("/api/save-mission", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...bookingData,
-        customer_email: email,
-        customer_phone: phone,
-        customer_first_name: firstName,
-        customer_last_name: lastName,
-        stripe_payment_intent_id: paymentIntent?.id || "",
-        status: "pending",
-        payment_status: "authorized",
-      }),
-    });
+    try {
+      const res = await fetch("/api/save-mission", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...bookingData,
+          customer_email: email,
+          customer_phone: phone,
+          customer_first_name: firstName,
+          customer_last_name: lastName,
+          stripe_payment_intent_id: paymentIntent?.id || "",
+          status: "pending",
+          payment_status: "authorized",
+        }),
+      });
 
-    const result = await res.json();
+      const result = await res.json();
 
-    if (!res.ok) {
+      if (!res.ok) {
+        setError(result.error || "Erreur d'enregistrement. Contactez-nous.");
+        setLoading(false);
+        return;
+      }
+
+      onBookingComplete(result.id);
+    } catch (fetchErr) {
+      console.error("Erreur save-mission:", fetchErr);
       setError("Erreur d'enregistrement. Contactez-nous.");
       setLoading(false);
-      return;
     }
-
-    onBookingComplete(result.id);
   };
 
   return (
