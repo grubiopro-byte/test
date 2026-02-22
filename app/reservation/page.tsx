@@ -413,8 +413,8 @@ export default function ReservationPage() {
         </aside>
 
         {/* COLONNE DROITE — Formulaire */}
-        <aside className="relative w-full lg:max-w-[26.5rem] px-4 md:px-0">
-          <div className="pb-[84px] lg:pb-0 pt-5 md:pt-8 lg:pt-10 px-5 md:px-6 lg:px-10 bg-white md:bg-transparent rounded-2xl md:rounded-none mb-4 md:mb-0">
+        <aside className="relative w-full lg:max-w-[26.5rem] px-4 md:px-0 md:overflow-y-auto">
+          <div className="pb-[84px] lg:pb-10 pt-5 md:pt-8 lg:pt-10 px-5 md:px-6 lg:px-10 bg-white md:bg-transparent rounded-2xl md:rounded-none mb-4 md:mb-0">
             {/* Header stepper */}
             <header className="container mb-4 lg:mb-8">
               {/* Step indicator */}
