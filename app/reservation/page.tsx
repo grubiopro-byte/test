@@ -308,7 +308,7 @@ export default function ReservationPage() {
 
       <div className="mx-auto flex max-w-[53rem] justify-center min-h-screen min-h-[100dvh]">
         {/* COLONNE GAUCHE — Récap "Votre Livrizi" */}
-        <aside className="hidden md:flex relative w-full lg:max-w-[26.5rem] flex-col self-stretch px-6 pt-[max(100px,10vh)]">
+        <aside className="hidden md:flex relative w-full lg:max-w-[26.5rem] flex-col px-6 pt-[max(100px,10vh)] md:sticky md:top-0 md:h-[100dvh] md:overflow-y-auto">
           {/* Header avec logo et Se connecter */}
           <header className="mb-7">
             <div className="container flex min-h-[56px] items-center space-x-3 pt-4">
@@ -413,7 +413,7 @@ export default function ReservationPage() {
         </aside>
 
         {/* COLONNE DROITE — Formulaire */}
-        <aside className="relative w-full lg:max-w-[26.5rem] px-4 md:px-0 md:overflow-y-auto">
+        <aside className="relative w-full lg:max-w-[26.5rem] px-4 md:px-0">
           <div className="pb-[84px] lg:pb-10 pt-5 md:pt-8 lg:pt-10 px-5 md:px-6 lg:px-10 bg-white md:bg-transparent rounded-2xl md:rounded-none mb-4 md:mb-0">
             {/* Header stepper */}
             <header className="container mb-4 lg:mb-8">
