@@ -23,21 +23,8 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
 
   async function handleLogin() {
-    if (!email || !password) {
-      Alert.alert('Erreur', 'Veuillez remplir tous les champs');
-      return;
-    }
-
-    setLoading(true);
-    const { user, error } = await signIn(email, password);
-    setLoading(false);
-
-    if (error) {
-      Alert.alert('Erreur de connexion', error);
-      return;
-    }
-
-    if (user?.role === 'livrizeur') {
+    // MODE DEMO : bypass auth
+    if (email.includes('livrizeur')) {
       router.replace('/(livrizeur)');
     } else {
       router.replace('/(client)');

@@ -32,35 +32,7 @@ export default function Register() {
   }
 
   async function handleRegister() {
-    if (!form.firstName || !form.lastName || !form.email || !form.phone || !form.password) {
-      Alert.alert('Erreur', 'Veuillez remplir tous les champs');
-      return;
-    }
-    if (form.password !== form.confirmPassword) {
-      Alert.alert('Erreur', 'Les mots de passe ne correspondent pas');
-      return;
-    }
-    if (form.password.length < 6) {
-      Alert.alert('Erreur', 'Le mot de passe doit faire au moins 6 caractères');
-      return;
-    }
-
-    setLoading(true);
-    const { user, error } = await signUp(
-      form.email,
-      form.password,
-      form.firstName,
-      form.lastName,
-      form.phone,
-      'client'
-    );
-    setLoading(false);
-
-    if (error) {
-      Alert.alert('Erreur', error);
-      return;
-    }
-
+    // MODE DEMO : bypass auth
     router.replace('/(client)');
   }
 

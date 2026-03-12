@@ -11,27 +11,8 @@ export default function Index() {
   }, []);
 
   async function checkAuth() {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (!session) {
-      router.replace('/(auth)/welcome');
-      return;
-    }
-
-    // Get user role
-    const { data: user } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', session.user.id)
-      .single();
-
-    if (user?.role === 'livrizeur') {
-      router.replace('/(livrizeur)');
-    } else {
-      router.replace('/(client)');
-    }
+    // MODE DEMO : toujours aller vers welcome
+    router.replace('/(auth)/welcome');
   }
 
   return (

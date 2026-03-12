@@ -81,6 +81,10 @@ export default function RegisterLivrizeur() {
   }
 
   async function handleSubmit() {
+    // MODE DEMO : bypass auth
+    router.replace('/(livrizeur)');
+    return;
+
     setLoading(true);
     try {
       const { user, error } = await signUp(
