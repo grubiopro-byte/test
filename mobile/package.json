@@ -45,6 +45,7 @@
     "react-native-screens": "~4.16.0",
     "react-native-svg": "15.12.1",
     "react-native-worklets": "file:./stubs/react-native-worklets",
+    "tailwindcss": "^3.4.0",
     "zustand": "^5.0.0"
   },
   "devDependencies": {
