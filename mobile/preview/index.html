@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Livrizi - Aperçu App Mobile</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#e5e7eb;min-height:100vh;display:flex;flex-direction:column}
+.top-nav{background:#1e40af;color:#fff;padding:12px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;z-index:100}
+.top-nav h1{font-size:18px;font-weight:700}
+.top-nav button{background:#eab308;color:#000;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600}
+.screen-links{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+.screen-links button{background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px}
+.screen-links button:hover{background:rgba(255,255,255,0.3)}
+.main{display:flex;justify-content:center;padding:30px 20px;flex:1}
+.phone{width:390px;height:844px;background:#000;border-radius:55px;box-shadow:0 0 0 2px #333,0 25px 80px rgba(0,0,0,0.5);position:relative;overflow:hidden;flex-shrink:0}
+.phone-notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:130px;height:34px;background:#000;border-radius:0 0 20px 20px;z-index:50}
+.status-bar{position:absolute;top:0;left:0;right:0;height:44px;display:flex;align-items:flex-start;padding:10px 24px 0;justify-content:space-between;z-index:40;color:#fff;font-size:12px;font-weight:600}
+.status-bar .time{font-size:15px;font-weight:700}
+.status-icons{display:flex;gap:5px;align-items:center}
+.home-indicator{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;background:rgba(255,255,255,0.3);border-radius:3px;z-index:40}
+.phone-screen{position:absolute;top:0;left:0;right:0;bottom:0;border-radius:55px;overflow:hidden}
+.screen{display:none;position:absolute;top:0;left:0;right:0;bottom:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+.screen.active{display:block}
+/* Scrollbar */
+.screen::-webkit-scrollbar{width:0}
+/* Screen content starts below status bar */
+.screen-content{padding-top:44px;min-height:100%;padding-bottom:40px}
+
+/* WELCOME */
+#screen-welcome .screen-content{background:#1e40af;color:#fff;display:flex;flex-direction:column;align-items:center;padding:60px 30px 40px;min-height:844px}
+#screen-welcome .logo{font-size:60px;margin-bottom:10px}
+#screen-welcome h2{font-size:32px;font-weight:800;letter-spacing:-0.5px}
+#screen-welcome .tagline{font-size:14px;opacity:0.8;margin:8px 0 30px;text-align:center}
+#screen-welcome .features{align-self:stretch;background:rgba(255,255,255,0.1);border-radius:16px;padding:16px;margin-bottom:30px}
+#screen-welcome .feature{padding:8px 0;font-size:14px;border-bottom:1px solid rgba(255,255,255,0.1)}
+#screen-welcome .feature:last-child{border:none}
+.btn-yellow{background:#eab308;color:#000;border:none;padding:16px;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;width:100%;margin-bottom:12px}
+.btn-outline-white{background:transparent;color:#fff;border:2px solid rgba(255,255,255,0.5);padding:14px;border-radius:14px;font-size:16px;font-weight:600;cursor:pointer;width:100%;margin-bottom:20px}
+#screen-welcome .livrizeur-link{color:#eab308;font-size:14px;font-weight:600;cursor:pointer;background:none;border:none}
+
+/* LOGIN */
+#screen-login .screen-content{background:#fff;min-height:844px}
+.screen-header{background:#1e40af;padding:20px 20px 24px;padding-top:60px;color:#fff}
+.screen-header h2{font-size:22px;font-weight:700}
+.screen-header p{font-size:13px;opacity:0.8;margin-top:4px}
+.form-body{padding:24px 20px}
+.input-group{margin-bottom:16px}
+.input-group label{display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px}
+.input-group input,.input-group textarea,.input-group select{width:100%;border:2px solid #e5e7eb;border-radius:10px;padding:12px 14px;font-size:15px;outline:none;transition:border-color 0.2s}
+.input-group input:focus{border-color:#1e40af}
+.btn-blue{background:#1e40af;color:#fff;border:none;padding:16px;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;width:100%}
+.link-text{text-align:center;margin-top:16px;font-size:14px;color:#6b7280}
+.link-text span{color:#1e40af;font-weight:600;cursor:pointer}
+
+/* CLIENT HOME */
+#screen-home .screen-content{background:#f3f4f6;padding-bottom:80px;min-height:844px;padding-top:0}
+.home-header{background:linear-gradient(135deg,#1e40af,#3b82f6);padding:50px 20px 28px;color:#fff}
+.home-header h2{font-size:22px;font-weight:700}
+.home-header p{font-size:13px;opacity:0.8;margin-top:4px}
+.home-body{padding:16px}
+.cta-card{background:#1e40af;border-radius:16px;padding:20px;text-align:center;margin-bottom:16px;cursor:pointer}
+.cta-card h3{color:#fff;font-size:18px;font-weight:700}
+.cta-card p{color:rgba(255,255,255,0.7);font-size:13px;margin-top:4px}
+.cta-card .cta-btn{background:#eab308;color:#000;border:none;padding:12px 24px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-top:12px;width:100%}
+.section-title{font-size:16px;font-weight:700;color:#111827;margin:16px 0 10px}
+.steps-list{background:#fff;border-radius:12px;padding:8px}
+.step-item{display:flex;gap:12px;padding:10px 8px;border-bottom:1px solid #f3f4f6;align-items:flex-start;font-size:13px}
+.step-item:last-child{border:none}
+.step-num{width:24px;height:24px;background:#1e40af;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.pricing-table{background:#fff;border-radius:12px;overflow:hidden;margin-top:8px}
+.pricing-row{display:flex;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #f3f4f6;font-size:13px}
+.pricing-row:last-child{border:none}
+.pricing-row .price{font-weight:700;color:#1e40af}
+.bottom-tabs{position:absolute;bottom:0;left:0;right:0;height:70px;background:#fff;border-top:1px solid #e5e7eb;display:flex;z-index:30}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;font-size:10px;color:#9ca3af;padding-bottom:8px}
+.tab-item.active{color:#1e40af}
+.tab-icon{font-size:20px}
+
+/* BOOKING */
+.booking-content{background:#f9fafb;min-height:844px;padding-bottom:100px}
+.progress-bar{padding:16px 20px 8px;padding-top:55px;background:#fff}
+.progress-bar .step-info{font-size:11px;color:#6b7280;margin-bottom:6px}
+.progress-track{height:4px;background:#e5e7eb;border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;border-radius:2px;transition:width 0.3s}
+.booking-header{background:#fff;padding:12px 20px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:10px;font-size:16px;font-weight:700}
+.back-btn{background:none;border:none;cursor:pointer;font-size:20px;padding:0;color:#374151}
+.booking-body{padding:16px}
+.map-placeholder{background:#e5e7eb;height:180px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;font-size:40px;color:#9ca3af}
+.address-input{background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;margin-bottom:16px}
+.addr-row{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #f3f4f6}
+.addr-row:last-child{border:none}
+.addr-marker{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;flex-shrink:0}
+.addr-marker.a{background:#1e40af}
+.addr-marker.b{background:#ef4444}
+.addr-row input{border:none;outline:none;flex:1;font-size:14px}
+
+.vehicle-cards{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.vehicle-card{background:#fff;border:2px solid #e5e7eb;border-radius:12px;padding:14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.vehicle-card.selected{border-color:#1e40af;background:#eff6ff}
+.vehicle-card .info h4{font-size:14px;font-weight:700}
+.vehicle-card .info p{font-size:12px;color:#6b7280}
+.vehicle-card .price{font-size:18px;font-weight:800;color:#1e40af}
+.vehicle-icon{font-size:28px}
+.toggle-group{background:#fff;border-radius:12px;padding:14px;margin-bottom:16px}
+.toggle-group label{font-size:13px;font-weight:600;display:block;margin-bottom:8px}
+.toggle-btns{display:flex;gap:8px}
+.toggle-btn{flex:1;padding:10px;border:2px solid #e5e7eb;border-radius:8px;background:#fff;cursor:pointer;font-size:13px;font-weight:600}
+.toggle-btn.active{border-color:#1e40af;background:#eff6ff;color:#1e40af}
+.price-display{background:#1e40af;border-radius:12px;padding:16px;text-align:center;color:#fff;margin-bottom:16px}
+.price-display .amount{font-size:28px;font-weight:800}
+.price-display p{font-size:12px;opacity:0.8}
+
+.day-selector{display:flex;gap:8px;overflow-x:auto;padding:4px 0 12px;margin-bottom:16px}
+.day-selector::-webkit-scrollbar{height:0}
+.day-btn{flex-shrink:0;padding:8px 14px;border:2px solid #e5e7eb;border-radius:10px;background:#fff;cursor:pointer;font-size:12px;font-weight:600;text-align:center}
+.day-btn.active{border-color:#1e40af;background:#eff6ff;color:#1e40af}
+.time-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.time-slot{padding:10px;border:2px solid #e5e7eb;border-radius:8px;background:#fff;cursor:pointer;font-size:12px;font-weight:600;text-align:center}
+.time-slot.active{border-color:#1e40af;background:#eff6ff;color:#1e40af}
+.selected-time{background:#d1fae5;border:1px solid #6ee7b7;border-radius:10px;padding:12px;text-align:center;font-size:13px;color:#065f46;font-weight:600}
+
+.upload-area{background:#fff;border:2px dashed #d1d5db;border-radius:12px;padding:24px;text-align:center;cursor:pointer;margin-bottom:16px}
+.upload-area .upload-icon{font-size:36px;margin-bottom:8px}
+.upload-area p{font-size:13px;color:#6b7280}
+.radio-group{background:#fff;border-radius:12px;padding:14px;margin-bottom:16px}
+.radio-group label{font-size:14px;font-weight:700;display:block;margin-bottom:10px}
+.radio-option{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:13px;cursor:pointer}
+.radio-option:last-child{border:none}
+.radio-dot{width:18px;height:18px;border:2px solid #d1d5db;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.radio-dot.selected{border-color:#1e40af}
+.radio-dot.selected::after{content:'';width:8px;height:8px;background:#1e40af;border-radius:50%}
+.manutention-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.manut-card{background:#fff;border:2px solid #e5e7eb;border-radius:10px;padding:12px;text-align:center;cursor:pointer}
+.manut-card.active{border-color:#1e40af;background:#eff6ff}
+.manut-card .manut-title{font-size:12px;font-weight:700}
+.manut-card .manut-price{font-size:11px;color:#6b7280;margin-top:2px}
+.total-card{background:#1e3a8a;border-radius:14px;padding:18px;color:#fff;margin-bottom:16px}
+.total-card .label{font-size:12px;opacity:0.7}
+.total-card .amount{font-size:36px;font-weight:800;margin:4px 0}
+.total-card .details{font-size:11px;opacity:0.7}
+
+/* CONFIRMATION */
+#screen-confirm .screen-content{background:#f3f4f6;min-height:844px;padding-top:0;padding-bottom:20px}
+.confirm-header{background:linear-gradient(135deg,#059669,#34d399);padding:50px 20px 28px;text-align:center;color:#fff}
+.confirm-check{font-size:50px;margin-bottom:8px}
+.confirm-header h2{font-size:22px;font-weight:800}
+.confirm-header p{opacity:0.85;font-size:14px;margin-top:4px}
+.confirm-body{padding:16px}
+.detail-card{background:#fff;border-radius:12px;padding:16px;margin-bottom:12px}
+.detail-card h4{font-size:14px;font-weight:700;margin-bottom:12px;color:#111827}
+.detail-row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px;border-bottom:1px solid #f3f4f6}
+.detail-row:last-child{border:none}
+.detail-row .val{font-weight:600;color:#1e40af}
+.status-banner{background:#fef3c7;border:1px solid #fbbf24;border-radius:12px;padding:14px;text-align:center;margin-bottom:12px;font-size:13px;font-weight:600;color:#92400e}
+.info-list{background:#fff;border-radius:12px;padding:14px;margin-bottom:16px}
+.info-item{display:flex;gap:10px;padding:8px 0;font-size:13px;color:#374151;border-bottom:1px solid #f3f4f6}
+.info-item:last-child{border:none}
+.confirm-btns{display:flex;gap:10px}
+.btn-secondary{background:#fff;color:#1e40af;border:2px solid #1e40af;padding:14px;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;flex:1}
+
+/* MY RIDES */
+#screen-rides .screen-content{background:#f3f4f6;min-height:844px;padding-top:0;padding-bottom:80px}
+.rides-header{background:#1e40af;padding:50px 20px 16px;color:#fff}
+.rides-header h2{font-size:20px;font-weight:700}
+.rides-tabs{display:flex;background:#fff;border-bottom:1px solid #e5e7eb}
+.rides-tab{flex:1;padding:14px;text-align:center;font-size:14px;font-weight:600;cursor:pointer;color:#9ca3af;border-bottom:3px solid transparent}
+.rides-tab.active{color:#1e40af;border-color:#1e40af}
+.rides-list{padding:12px}
+.ride-card{background:#fff;border-radius:12px;padding:14px;margin-bottom:10px;cursor:pointer}
+.ride-card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.ride-status{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600}
+.status-dot{width:8px;height:8px;border-radius:50%}
+.ride-route{display:flex;flex-direction:column;gap:6px;font-size:13px}
+.route-point{display:flex;align-items:center;gap:8px}
+.ride-price{font-size:16px;font-weight:800;color:#1e40af}
+
+/* RIDE DETAIL */
+#screen-ride-detail .screen-content{background:#f3f4f6;min-height:844px;padding-top:0;padding-bottom:20px}
+.detail-header{background:#1e40af;padding:50px 20px 16px;color:#fff;display:flex;align-items:center;gap:10px}
+.detail-body{padding:12px}
+.timeline{background:#fff;border-radius:12px;padding:14px;margin-bottom:12px}
+.timeline h4{font-size:14px;font-weight:700;margin-bottom:12px}
+.timeline-item{display:flex;gap:12px;padding:6px 0}
+.timeline-dot{width:20px;height:20px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px}
+.timeline-dot.done{background:#059669;color:#fff}
+.timeline-dot.active{background:#1e40af;color:#fff}
+.timeline-dot.pending{background:#e5e7eb}
+.timeline-text{font-size:13px;padding-top:2px}
+.livrizeur-card{background:#fff;border-radius:12px;padding:14px;margin-bottom:12px;display:flex;align-items:center;gap:12px}
+.livrizeur-avatar{width:48px;height:48px;background:#dbeafe;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.livrizeur-info h4{font-size:14px;font-weight:700}
+.livrizeur-info .rating{font-size:12px;color:#6b7280;margin-top:2px}
+.btn-green{background:#059669;color:#fff;border:none;padding:16px;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;width:100%}
+
+/* LIVRIZEUR */
+#screen-lv-missions .screen-content,
+#screen-lv-earnings .screen-content,
+#screen-lv-profile .screen-content{padding-top:0;min-height:844px;padding-bottom:80px;background:#f3f4f6}
+.lv-header{background:#1e40af;padding:50px 20px 24px;color:#fff}
+.lv-header h2{font-size:20px;font-weight:700}
+.lv-header p{font-size:13px;opacity:0.8;margin-top:4px}
+.lv-tabs{position:absolute;bottom:0;left:0;right:0;height:70px;background:#fff;border-top:1px solid #e5e7eb;display:flex;z-index:30}
+.mission-card{background:#fff;border-radius:12px;padding:14px;margin:0 12px 10px}
+.mission-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+.mission-route{font-size:13px;line-height:1.5}
+.mission-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.meta-tag{background:#f3f4f6;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600;color:#374151}
+.mission-footer{display:flex;justify-content:space-between;align-items:center}
+.mission-gain{font-size:18px;font-weight:800;color:#059669}
+.earnings-header{background:linear-gradient(135deg,#1e40af,#3b82f6);padding:50px 20px 28px;text-align:center;color:#fff}
+.earnings-amount{font-size:40px;font-weight:800;margin:8px 0}
+.earnings-label{font-size:13px;opacity:0.8}
+.earnings-cards{padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px}
+.earnings-card{background:#fff;border-radius:12px;padding:14px}
+.earnings-card .ec-label{font-size:11px;color:#6b7280}
+.earnings-card .ec-amount{font-size:20px;font-weight:800;color:#111827;margin-top:4px}
+.recent-title{font-size:14px;font-weight:700;padding:0 12px;margin-bottom:8px}
+.recent-item{background:#fff;margin:0 12px 8px;border-radius:10px;padding:12px;display:flex;justify-content:space-between;align-items:center;font-size:13px}
+.recent-item .ri-gain{font-weight:700;color:#059669}
+.profile-header{background:#1e40af;padding:50px 20px 28px;text-align:center;color:#fff}
+.profile-avatar{font-size:50px;margin-bottom:8px}
+.profile-header h2{font-size:20px;font-weight:700}
+.badge{background:#10b981;color:#fff;font-size:11px;padding:3px 10px;border-radius:20px;display:inline-block;margin:6px 0}
+.profile-stats{display:flex;justify-content:space-around;margin-top:12px}
+.profile-stat{text-align:center}
+.profile-stat .stat-val{font-size:20px;font-weight:800}
+.profile-stat .stat-lab{font-size:11px;opacity:0.8}
+.profile-body{padding:12px}
+.profile-card{background:#fff;border-radius:12px;padding:14px;margin-bottom:10px}
+.profile-card h4{font-size:14px;font-weight:700;margin-bottom:10px}
+.profile-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;font-size:13px;border-bottom:1px solid #f3f4f6}
+.profile-row:last-child{border:none}
+.profile-row .pval{font-weight:600}
+.radius-slider{width:100%;margin-top:8px;accent-color:#1e40af}
+
+/* Transitions */
+.screen{animation:fadeIn 0.2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+</style>
+</head>
+<body>
+
+<div class="top-nav">
+  <h1>🚛 Livrizi</h1>
+  <button onclick="goBack()">← Retour</button>
+  <div class="screen-links">
+    <button onclick="showScreen('screen-welcome')">Accueil</button>
+    <button onclick="showScreen('screen-login')">Connexion</button>
+    <button onclick="showScreen('screen-register')">Inscription</button>
+    <button onclick="showScreen('screen-home')">Client Home</button>
+    <button onclick="showScreen('screen-book1')">Étape 1</button>
+    <button onclick="showScreen('screen-book2')">Étape 2</button>
+    <button onclick="showScreen('screen-book3')">Étape 3</button>
+    <button onclick="showScreen('screen-book4')">Étape 4</button>
+    <button onclick="showScreen('screen-book5')">Étape 5</button>
+    <button onclick="showScreen('screen-book6')">Étape 6</button>
+    <button onclick="showScreen('screen-confirm')">Confirmation</button>
+    <button onclick="showScreen('screen-rides')">Mes courses</button>
+    <button onclick="showScreen('screen-ride-detail')">Détail course</button>
+    <button onclick="showScreen('screen-lv-missions')">LV Missions</button>
+    <button onclick="showScreen('screen-lv-earnings')">LV Gains</button>
+    <button onclick="showScreen('screen-lv-profile')">LV Profil</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="phone">
+    <!-- Notch -->
+    <div class="phone-notch"></div>
+    <!-- Status bar -->
+    <div class="status-bar">
+      <span class="time">9:41</span>
+      <div class="status-icons">
+        <span>●●●</span>
+        <span>WiFi</span>
+        <span>🔋</span>
+      </div>
+    </div>
+    <!-- Home indicator -->
+    <div class="home-indicator"></div>
+
+    <div class="phone-screen">
+
+      <!-- WELCOME -->
+      <div id="screen-welcome" class="screen active">
+        <div class="screen-content">
+          <div class="logo">🚛</div>
+          <h2>Livrizi</h2>
+          <p class="tagline">Transport & déménagement à la demande</p>
+          <div class="features">
+            <div class="feature">📍 Simple & rapide</div>
+            <div class="feature">🚛 Livrizeurs vérifiés</div>
+            <div class="feature">💳 Paiement sécurisé</div>
+            <div class="feature">⭐ Noté & fiable</div>
+          </div>
+          <button class="btn-yellow" onclick="showScreen('screen-register')">Commencer maintenant</button>
+          <button class="btn-outline-white" onclick="showScreen('screen-login')">J'ai déjà un compte</button>
+          <button class="livrizeur-link" onclick="showScreen('screen-lv-missions')">Devenir Livrizeur →</button>
+        </div>
+      </div>
+
+      <!-- LOGIN -->
+      <div id="screen-login" class="screen">
+        <div class="screen-content">
+          <div class="screen-header">
+            <h2>Connexion</h2>
+            <p>Ravi de vous revoir !</p>
+          </div>
+          <div class="form-body">
+            <div class="input-group">
+              <label>📧 Email</label>
+              <input type="email" placeholder="votre@email.com">
+            </div>
+            <div class="input-group">
+              <label>🔒 Mot de passe</label>
+              <input type="password" placeholder="••••••••">
+            </div>
+            <button class="btn-blue" onclick="showScreen('screen-home')">Se connecter</button>
+            <div class="link-text">Pas encore de compte ? <span onclick="showScreen('screen-register')">S'inscrire</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- REGISTER -->
+      <div id="screen-register" class="screen">
+        <div class="screen-content">
+          <div class="screen-header">
+            <h2>Créer un compte</h2>
+            <p>Rejoignez Livrizi en quelques secondes</p>
+          </div>
+          <div class="form-body">
+            <div class="input-group"><label>Prénom</label><input type="text" placeholder="Jean"></div>
+            <div class="input-group"><label>Nom</label><input type="text" placeholder="Dupont"></div>
+            <div class="input-group"><label>Email</label><input type="email" placeholder="jean@email.com"></div>
+            <div class="input-group"><label>Téléphone</label><input type="tel" placeholder="+33 6 12 34 56 78"></div>
+            <div class="input-group"><label>Mot de passe</label><input type="password" placeholder="••••••••"></div>
+            <div class="input-group"><label>Confirmer</label><input type="password" placeholder="••••••••"></div>
+            <button class="btn-blue" onclick="showScreen('screen-home')">Créer mon compte</button>
+            <div class="link-text">Déjà un compte ? <span onclick="showScreen('screen-login')">Se connecter</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CLIENT HOME -->
+      <div id="screen-home" class="screen">
+        <div class="screen-content">
+          <div class="home-header">
+            <h2>Bonjour 👋</h2>
+            <p>Prêt pour votre prochain déménagement ?</p>
+          </div>
+          <div class="home-body">
+            <div class="cta-card" onclick="showScreen('screen-book1')">
+              <h3>🚛 Réserver maintenant</h3>
+              <p>Transport & déménagement à la demande</p>
+              <button class="cta-btn">Réserver un transport</button>
+            </div>
+            <div class="section-title">Comment ça marche ?</div>
+            <div class="steps-list">
+              <div class="step-item"><div class="step-num">1</div><div>Renseignez vos adresses départ / arrivée</div></div>
+              <div class="step-item"><div class="step-num">2</div><div>Choisissez le véhicule adapté</div></div>
+              <div class="step-item"><div class="step-num">3</div><div>Sélectionnez une date et un créneau</div></div>
+              <div class="step-item"><div class="step-num">4</div><div>Décrivez vos objets à transporter</div></div>
+              <div class="step-item"><div class="step-num">5</div><div>Options supplémentaires & confirmation</div></div>
+              <div class="step-item"><div class="step-num">6</div><div>Paiement sécurisé en ligne</div></div>
+            </div>
+            <div class="section-title">Tarifs indicatifs</div>
+            <div class="pricing-table">
+              <div class="pricing-row"><span>🚐 Camionnette 6m³</span><span class="price">dès 39€</span></div>
+              <div class="pricing-row"><span>🚛 Fourgon 11m³</span><span class="price">dès 59€</span></div>
+              <div class="pricing-row"><span>🚚 Grand camion 20m³</span><span class="price">dès 89€</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="bottom-tabs">
+          <div class="tab-item active"><span class="tab-icon">🏠</span>Réserver</div>
+          <div class="tab-item" onclick="showScreen('screen-rides')"><span class="tab-icon">📦</span>Mes courses</div>
+          <div class="tab-item"><span class="tab-icon">👤</span>Profil</div>
+        </div>
+      </div>
+
+      <!-- BOOKING STEP 1 -->
+      <div id="screen-book1" class="screen">
+        <div class="screen-content">
+          <div class="progress-bar">
+            <div class="step-info">Étape 1 sur 6 – Adresses</div>
+            <div class="progress-track"><div class="progress-fill" style="width:16.6%;background:#1e40af"></div></div>
+          </div>
+          <div class="booking-header">
+            <button class="back-btn" onclick="goBack()">←</button>
+            <span>Adresses</span>
+          </div>
+          <div class="booking-body">
+            <div class="map-placeholder">📍</div>
+            <div class="address-input">
+              <div class="addr-row">
+                <div class="addr-marker a">A</div>
+                <input type="text" placeholder="Adresse de départ...">
+              </div>
+              <div class="addr-row">
+                <div class="addr-marker b">B</div>
+                <input type="text" placeholder="Adresse d'arrivée...">
+              </div>
+            </div>
+            <button class="btn-blue" onclick="showScreen('screen-book2')">Continuer →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOOKING STEP 2 -->
+      <div id="screen-book2" class="screen">
+        <div class="screen-content">
+          <div class="progress-bar">
+            <div class="step-info">Étape 2 sur 6 – Véhicule</div>
+            <div class="progress-track"><div class="progress-fill" style="width:33.3%;background:#7c3aed"></div></div>
+          </div>
+          <div class="booking-header">
+            <button class="back-btn" onclick="goBack()">←</button>
+            <span>Véhicule</span>
+          </div>
+          <div class="booking-body">
+            <div class="vehicle-cards">
+              <div class="vehicle-card" onclick="selectVehicle(this)">
+                <div><div class="vehicle-icon">🚐</div><div class="info"><h4>Camionnette</h4><p>6m³ · Petits volumes</p></div></div>
+                <div class="price">39€</div>
+              </div>
+              <div class="vehicle-card selected" onclick="selectVehicle(this)">
+                <div><div class="vehicle-icon">🚛</div><div class="info"><h4>Fourgon</h4><p>11m³ · Volume moyen</p></div></div>
+                <div class="price">59€</div>
+              </div>
+              <div class="vehicle-card" onclick="selectVehicle(this)">
+                <div><div class="vehicle-icon">🚚</div><div class="info"><h4>Grand camion</h4><p>20m³ · Grands volumes</p></div></div>
+                <div class="price">89€</div>
+              </div>
+            </div>
+            <div class="toggle-group">
+              <label>Nombre de Livrizeurs</label>
+              <div class="toggle-btns">
+                <button class="toggle-btn active">1 Livrizeur</button>
+                <button class="toggle-btn" onclick="toggleLivrizeur(this)">2 Livrizeurs +10€</button>
+              </div>
+            </div>
+            <div class="price-display">
+              <div class="amount">59,00 €</div>
+              <p>Prix estimé • 1 Livrizeur</p>
+            </div>
+            <button class="btn-blue" onclick="showScreen('screen-book3')">Continuer →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOOKING STEP 3 -->
+      <div id="screen-book3" class="screen">
+        <div class="screen-content">
+          <div class="progress-bar">
+            <div class="step-info">Étape 3 sur 6 – Date & heure</div>
+            <div class="progress-track"><div class="progress-fill" style="width:50%;background:#db2777"></div></div>
+          </div>
+          <div class="booking-header">
+            <button class="back-btn" onclick="goBack()">←</button>
+            <span>Date & Heure</span>
+          </div>
+          <div class="booking-body">
+            <div class="day-selector">
+              <button class="day-btn active">Aujourd'hui<br><small>12 Mar</small></button>
+              <button class="day-btn" onclick="selectDay(this)">Demain<br><small>13 Mar</small></button>
+              <button class="day-btn" onclick="selectDay(this)">Sam<br><small>14 Mar</small></button>
+              <button class="day-btn" onclick="selectDay(this)">Dim<br><small>15 Mar</small></button>
+              <button class="day-btn" onclick="selectDay(this)">Lun<br><small>16 Mar</small></button>
+            </div>
+            <div class="time-grid">
+              <div class="time-slot" onclick="selectTime(this)">8h – 9h</div>
+              <div class="time-slot active" onclick="selectTime(this)">9h – 10h</div>
+              <div class="time-slot" onclick="selectTime(this)">10h – 11h</div>
+              <div class="time-slot" onclick="selectTime(this)">11h – 12h</div>
+              <div class="time-slot" onclick="selectTime(this)">13h – 14h</div>
+              <div class="time-slot" onclick="selectTime(this)">14h – 15h</div>
+              <div class="time-slot" onclick="selectTime(this)">15h – 16h</div>
+              <div class="time-slot" onclick="selectTime(this)">16h – 17h</div>
+            </div>
+            <div class="selected-time">✅ Créneau sélectionné : Aujourd'hui 9h-10h</div>
+            <button class="btn-blue" style="margin-top:12px" onclick="showScreen('screen-book4')">Continuer →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOOKING STEP 4 -->
+      <div id="screen-book4" class="screen">
+        <div class="screen-content">
+          <div class="progress-bar">
+            <div class="step-info">Étape 4 sur 6 – Détails</div>
+            <div class="progress-track"><div class="progress-fill" style="width:66.6%;background:#d97706"></div></div>
+          </div>
+          <div class="booking-header">
+            <button class="back-btn" onclick="goBack()">←</button>
+            <span>Détails</span>
+          </div>
+          <div class="booking-body">
+            <div class="input-group">
+              <label>Description des objets</label>
+              <textarea style="height:90px;resize:none" placeholder="Ex: canapé 3 places, 2 cartons, réfrigérateur..."></textarea>
+            </div>
+            <div class="upload-area">
+              <div class="upload-icon">📷</div>
+              <p>Ajouter des photos</p>
+              <p style="font-size:11px;margin-top:4px;color:#9ca3af">Optionnel – aidez le Livrizeur à préparer</p>
+            </div>
+            <div class="input-group">
+              <label>Contact sur place</label>
+              <input type="tel" placeholder="+33 6 12 34 56 78">
+            </div>
+            <button class="btn-blue" onclick="showScreen('screen-book5')">Continuer →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOOKING STEP 5 -->
+      <div id="screen-book5" class="screen">
+        <div class="screen-content">
+          <div class="progress-bar">
+            <div class="step-info">Étape 5 sur 6 – Options</div>
+            <div class="progress-track"><div class="progress-fill" style="width:83.3%;background:#059669"></div></div>
+          </div>
+          <div class="booking-header">
+            <button class="back-btn" onclick="goBack()">←</button>
+            <span>Options</span>
+          </div>
+          <div class="booking-body">
+            <div class="radio-group">
+              <label>Accès au point de départ</label>
+              <div class="radio-option"><div class="radio-dot selected"></div>Accès direct (plain-pied / ascenseur)</div>
+              <div class="radio-option"><div class="radio-dot"></div>Escaliers (étage à préciser)</div>
+              <div class="radio-option"><div class="radio-dot"></div>Difficile (cave, grenier...)</div>
+            </div>
+            <div class="radio-group">
+              <label>Accès au point d'arrivée</label>
+              <div class="radio-option"><div class="radio-dot selected"></div>Accès direct</div>
+              <div class="radio-option"><div class="radio-dot"></div>Escaliers</div>
+              <div class="radio-option"><div class="radio-dot"></div>Difficile</div>
+            </div>
+            <div class="section-title" style="padding:0;margin:0 0 8px">Manutention</div>
+            <div class="manutention-grid">
+              <div class="manut-card active"><div class="manut-title">Express</div><div class="manut-price">Inclus</div></div>
+              <div class="manut-card" onclick="selectManut(this)"><div class="manut-title">+1h</div><div class="manut-price">+20€</div></div>
+              <div class="manut-card" onclick="selectManut(this)"><div class="manut-title">+2h</div><div class="manut-price">+35€</div></div>
+              <div class="manut-card" onclick="selectManut(this)"><div class="manut-title">+3h</div><div class="manut-price">+50€</div></div>
+            </div>
+            <div class="total-card">
+              <div class="label">Total estimé</div>
+              <div class="amount">59,00 €</div>
+              <div class="details">Fourgon 11m³ • 1 Livrizeur • Express</div>
+            </div>
+            <button class="btn-blue" onclick="showScreen('screen-book6')">Continuer →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOOKING STEP 6 -->
+      <div id="screen-book6" class="screen">
+        <div class="screen-content">
+          <div class="progress-bar">
+            <div class="step-info">Étape 6 sur 6 – Paiement</div>
+            <div class="progress-track"><div class="progress-fill" style="width:100%;background:#1e40af"></div></div>
+          </div>
+          <div class="booking-header">
+            <button class="back-btn" onclick="goBack()">←</button>
+            <span>Paiement</span>
+          </div>
+          <div class="booking-body">
+            <div class="total-card" style="margin-bottom:16px">
+              <div class="label">Montant à payer</div>
+              <div class="amount">69,00 €</div>
+              <div class="details">Fourgon 11m³ • 1 Livrizeur • +1h manutention</div>
+            </div>
+            <div class="input-group"><label>Prénom</label><input type="text" placeholder="Jean"></div>
+            <div class="input-group"><label>Nom</label><input type="text" placeholder="Dupont"></div>
+            <div class="input-group"><label>Email</label><input type="email" placeholder="jean@email.com"></div>
+            <div class="input-group"><label>Téléphone</label><input type="tel" placeholder="+33 6 12 34 56 78"></div>
+            <div class="input-group">
+              <label>💳 Carte bancaire</label>
+              <input type="text" placeholder="1234 5678 9012 3456">
+            </div>
+            <div style="display:flex;gap:10px">
+              <div class="input-group" style="flex:1"><label>MM/AA</label><input placeholder="12/27"></div>
+              <div class="input-group" style="flex:1"><label>CVV</label><input placeholder="123"></div>
+            </div>
+            <button class="btn-blue" onclick="showScreen('screen-confirm')" style="background:#059669;margin-top:4px">🚛 Réserver mon transport</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONFIRMATION -->
+      <div id="screen-confirm" class="screen">
+        <div class="screen-content">
+          <div class="confirm-header">
+            <div class="confirm-check">✓</div>
+            <h2>Réservation confirmée !</h2>
+            <p>Votre transport a bien été enregistré</p>
+          </div>
+          <div class="confirm-body">
+            <div class="detail-card">
+              <h4>📋 Détails de la course</h4>
+              <div class="detail-row"><span>Véhicule</span><span class="val">Fourgon 11m³</span></div>
+              <div class="detail-row"><span>Date</span><span class="val">Aujourd'hui 9h-10h</span></div>
+              <div class="detail-row"><span>Départ</span><span class="val">Paris 75011</span></div>
+              <div class="detail-row"><span>Arrivée</span><span class="val">Paris 75020</span></div>
+              <div class="detail-row"><span>Total</span><span class="val">69,00 €</span></div>
+            </div>
+            <div class="status-banner">⏳ En attente d'un Livrizeur disponible</div>
+            <div class="info-list">
+              <div class="info-item">📱 Vous recevrez une notification dès qu'un Livrizeur accepte</div>
+              <div class="info-item">📧 Un récapitulatif a été envoyé par email</div>
+              <div class="info-item">❌ Annulation gratuite jusqu'à 2h avant</div>
+            </div>
+            <div class="confirm-btns">
+              <button class="btn-secondary" onclick="showScreen('screen-rides')">Mes courses</button>
+              <button class="btn-blue" style="flex:1" onclick="showScreen('screen-home')">Accueil</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MY RIDES -->
+      <div id="screen-rides" class="screen">
+        <div class="screen-content">
+          <div class="rides-header"><h2>Mes courses</h2></div>
+          <div class="rides-tabs">
+            <div class="rides-tab active">En cours (1)</div>
+            <div class="rides-tab" onclick="switchTab(this)">Historique (5)</div>
+          </div>
+          <div class="rides-list">
+            <div class="ride-card" onclick="showScreen('screen-ride-detail')">
+              <div class="ride-card-top">
+                <div class="ride-status"><div class="status-dot" style="background:#f59e0b"></div>En attente</div>
+                <span class="ride-price">69,00 €</span>
+              </div>
+              <div class="ride-route">
+                <div class="route-point"><span style="color:#1e40af">A</span> 12 rue de la Paix, Paris 75011</div>
+                <div class="route-point"><span style="color:#ef4444">B</span> 45 av. Gambetta, Paris 75020</div>
+              </div>
+              <div style="font-size:11px;color:#9ca3af;margin-top:8px">Aujourd'hui · 9h-10h · Fourgon 11m³</div>
+            </div>
+          </div>
+          <div style="padding:0 12px;font-size:14px;font-weight:700;color:#111827;margin-bottom:8px">Historique</div>
+          <div class="rides-list" style="padding-top:0">
+            <div class="ride-card">
+              <div class="ride-card-top">
+                <div class="ride-status"><div class="status-dot" style="background:#10b981"></div>Terminée</div>
+                <span class="ride-price">45,00 €</span>
+              </div>
+              <div class="ride-route">
+                <div class="route-point"><span style="color:#1e40af">A</span> Lyon 69003</div>
+                <div class="route-point"><span style="color:#ef4444">B</span> Lyon 69007</div>
+              </div>
+              <div style="font-size:11px;color:#9ca3af;margin-top:8px">5 Mar · Camionnette 6m³</div>
+            </div>
+          </div>
+        </div>
+        <div class="bottom-tabs">
+          <div class="tab-item" onclick="showScreen('screen-home')"><span class="tab-icon">🏠</span>Réserver</div>
+          <div class="tab-item active"><span class="tab-icon">📦</span>Mes courses</div>
+          <div class="tab-item"><span class="tab-icon">👤</span>Profil</div>
+        </div>
+      </div>
+
+      <!-- RIDE DETAIL -->
+      <div id="screen-ride-detail" class="screen">
+        <div class="screen-content">
+          <div class="detail-header">
+            <button class="back-btn" onclick="goBack()" style="color:#fff">←</button>
+            <span style="font-size:16px;font-weight:700">Détail de la course</span>
+          </div>
+          <div class="detail-body">
+            <div class="map-placeholder" style="margin:0 0 12px;border-radius:0">🗺️</div>
+            <div class="timeline">
+              <h4>Suivi en temps réel</h4>
+              <div class="timeline-item"><div class="timeline-dot done">✓</div><div class="timeline-text">Réservation confirmée</div></div>
+              <div class="timeline-item"><div class="timeline-dot active">⏳</div><div class="timeline-text"><strong>En attente d'un Livrizeur</strong></div></div>
+              <div class="timeline-item"><div class="timeline-dot pending"></div><div class="timeline-text" style="color:#9ca3af">Course acceptée</div></div>
+              <div class="timeline-item"><div class="timeline-dot pending"></div><div class="timeline-text" style="color:#9ca3af">🚗 Livrizeur en route</div></div>
+              <div class="timeline-item"><div class="timeline-dot pending"></div><div class="timeline-text" style="color:#9ca3af">Chargement en cours</div></div>
+              <div class="timeline-item"><div class="timeline-dot pending"></div><div class="timeline-text" style="color:#9ca3af">✅ Course terminée</div></div>
+            </div>
+            <div class="detail-card">
+              <h4>📋 Résumé</h4>
+              <div class="detail-row"><span>Départ</span><span class="val">12 rue de la Paix, 75011</span></div>
+              <div class="detail-row"><span>Arrivée</span><span class="val">45 av. Gambetta, 75020</span></div>
+              <div class="detail-row"><span>Véhicule</span><span class="val">Fourgon 11m³</span></div>
+              <div class="detail-row"><span>Total</span><span class="val">69,00 €</span></div>
+            </div>
+            <button class="btn-green">Confirmer la fin de course</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- LIVRIZEUR - MISSIONS -->
+      <div id="screen-lv-missions" class="screen">
+        <div class="screen-content">
+          <div class="lv-header">
+            <h2>🚛 Missions disponibles</h2>
+            <p>3 missions près de vous</p>
+          </div>
+          <div style="padding:12px 0">
+            <div class="mission-card">
+              <div class="mission-header">
+                <div class="mission-route">
+                  <div>📍 <strong>Paris 75011</strong></div>
+                  <div style="padding-left:8px;color:#6b7280">↓</div>
+                  <div>📍 <strong>Paris 75020</strong></div>
+                </div>
+                <div class="mission-gain">+69€</div>
+              </div>
+              <div class="mission-meta">
+                <div class="meta-tag">🚛 Fourgon 11m³</div>
+                <div class="meta-tag">📅 Aujourd'hui 9h-10h</div>
+                <div class="meta-tag">👤 1 Livrizeur</div>
+              </div>
+              <div class="mission-footer">
+                <span style="font-size:12px;color:#6b7280">3.2 km de vous</span>
+                <button class="btn-blue" style="padding:8px 16px;width:auto;border-radius:8px">Accepter</button>
+              </div>
+            </div>
+            <div class="mission-card">
+              <div class="mission-header">
+                <div class="mission-route">
+                  <div>📍 <strong>Paris 75001</strong></div>
+                  <div style="padding-left:8px;color:#6b7280">↓</div>
+                  <div>📍 <strong>Vincennes 94300</strong></div>
+                </div>
+                <div class="mission-gain">+89€</div>
+              </div>
+              <div class="mission-meta">
+                <div class="meta-tag">🚚 Grand camion 20m³</div>
+                <div class="meta-tag">📅 Demain 8h-9h</div>
+              </div>
+              <div class="mission-footer">
+                <span style="font-size:12px;color:#6b7280">5.8 km de vous</span>
+                <button class="btn-blue" style="padding:8px 16px;width:auto;border-radius:8px">Accepter</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="lv-tabs bottom-tabs">
+          <div class="tab-item active"><span class="tab-icon">🔍</span>Missions</div>
+          <div class="tab-item"><span class="tab-icon">📦</span>Mes missions</div>
+          <div class="tab-item" onclick="showScreen('screen-lv-earnings')"><span class="tab-icon">💰</span>Gains</div>
+          <div class="tab-item" onclick="showScreen('screen-lv-profile')"><span class="tab-icon">👤</span>Profil</div>
+        </div>
+      </div>
+
+      <!-- LIVRIZEUR - EARNINGS -->
+      <div id="screen-lv-earnings" class="screen">
+        <div class="screen-content">
+          <div class="earnings-header">
+            <div class="earnings-label">Gains ce mois</div>
+            <div class="earnings-amount">286,50 €</div>
+            <div class="earnings-label">Mars 2026 • 8 courses</div>
+          </div>
+          <div class="earnings-cards">
+            <div class="earnings-card"><div class="ec-label">Aujourd'hui</div><div class="ec-amount">0 €</div></div>
+            <div class="earnings-card"><div class="ec-label">Cette semaine</div><div class="ec-amount">89 €</div></div>
+          </div>
+          <div class="recent-title">Courses récentes</div>
+          <div class="recent-item"><div><div style="font-weight:600">Paris 75011 → 75020</div><div style="font-size:11px;color:#6b7280">Hier · Fourgon</div></div><div class="ri-gain">+69€</div></div>
+          <div class="recent-item"><div><div style="font-weight:600">Paris 75001 → Vincennes</div><div style="font-size:11px;color:#6b7280">8 Mar · Grand camion</div></div><div class="ri-gain">+89€</div></div>
+          <div class="recent-item"><div><div style="font-weight:600">Lyon 69003 → 69007</div><div style="font-size:11px;color:#6b7280">5 Mar · Camionnette</div></div><div class="ri-gain">+45€</div></div>
+        </div>
+        <div class="lv-tabs bottom-tabs">
+          <div class="tab-item" onclick="showScreen('screen-lv-missions')"><span class="tab-icon">🔍</span>Missions</div>
+          <div class="tab-item"><span class="tab-icon">📦</span>Mes missions</div>
+          <div class="tab-item active"><span class="tab-icon">💰</span>Gains</div>
+          <div class="tab-item" onclick="showScreen('screen-lv-profile')"><span class="tab-icon">👤</span>Profil</div>
+        </div>
+      </div>
+
+      <!-- LIVRIZEUR - PROFILE -->
+      <div id="screen-lv-profile" class="screen">
+        <div class="screen-content">
+          <div class="profile-header">
+            <div class="profile-avatar">🚛</div>
+            <h2>Thomas M.</h2>
+            <div class="badge">● Compte actif</div>
+            <div class="profile-stats">
+              <div class="profile-stat"><div class="stat-val">4.8 ⭐</div><div class="stat-lab">Note</div></div>
+              <div class="profile-stat"><div class="stat-val">23</div><div class="stat-lab">Avis</div></div>
+              <div class="profile-stat"><div class="stat-val">47</div><div class="stat-lab">Courses</div></div>
+            </div>
+          </div>
+          <div class="profile-body">
+            <div class="profile-card">
+              <h4>🚛 Mon véhicule</h4>
+              <div class="profile-row"><span>Type</span><span class="pval">Fourgon 11m³</span></div>
+              <div class="profile-row"><span>Immatriculation</span><span class="pval">AB-123-CD</span></div>
+              <div class="profile-row"><span>Statut</span><span class="pval" style="color:#059669">✓ Vérifié</span></div>
+            </div>
+            <div class="profile-card">
+              <h4>📍 Rayon d'intervention</h4>
+              <div class="profile-row"><span>Rayon actuel</span><span class="pval">20 km</span></div>
+              <input type="range" min="5" max="50" value="20" class="radius-slider">
+              <div style="display:flex;justify-content:space-between;font-size:11px;color:#9ca3af;margin-top:4px"><span>5 km</span><span>50 km</span></div>
+            </div>
+            <div class="profile-card">
+              <h4>👤 Informations</h4>
+              <div class="profile-row"><span>Nom</span><span class="pval">Thomas Martin</span></div>
+              <div class="profile-row"><span>Email</span><span class="pval">thomas@email.com</span></div>
+              <div class="profile-row"><span>Téléphone</span><span class="pval">+33 6 12 34 56 78</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="lv-tabs bottom-tabs">
+          <div class="tab-item" onclick="showScreen('screen-lv-missions')"><span class="tab-icon">🔍</span>Missions</div>
+          <div class="tab-item"><span class="tab-icon">📦</span>Mes missions</div>
+          <div class="tab-item" onclick="showScreen('screen-lv-earnings')"><span class="tab-icon">💰</span>Gains</div>
+          <div class="tab-item active"><span class="tab-icon">👤</span>Profil</div>
+        </div>
+      </div>
+
+    </div><!-- phone-screen -->
+  </div><!-- phone -->
+</div><!-- main -->
+
+<script>
+var history = ['screen-welcome'];
+
+function showScreen(id) {
+  var current = document.querySelector('.screen.active');
+  if (current) current.classList.remove('active');
+  var next = document.getElementById(id);
+  if (next) {
+    next.classList.add('active');
+    next.scrollTop = 0;
+    if (history[history.length-1] !== id) history.push(id);
+  }
+}
+
+function goBack() {
+  if (history.length > 1) {
+    history.pop();
+    var prev = history[history.length-1];
+    var current = document.querySelector('.screen.active');
+    if (current) current.classList.remove('active');
+    var target = document.getElementById(prev);
+    if (target) { target.classList.add('active'); target.scrollTop = 0; }
+  }
+}
+
+function selectVehicle(el) {
+  document.querySelectorAll('.vehicle-card').forEach(function(c){ c.classList.remove('selected'); });
+  el.classList.add('selected');
+}
+
+function toggleLivrizeur(el) {
+  document.querySelectorAll('.toggle-btn').forEach(function(b){ b.classList.remove('active'); });
+  el.classList.add('active');
+}
+
+function selectDay(el) {
+  document.querySelectorAll('.day-btn').forEach(function(b){ b.classList.remove('active'); });
+  el.classList.add('active');
+}
+
+function selectTime(el) {
+  document.querySelectorAll('.time-slot').forEach(function(s){ s.classList.remove('active'); });
+  el.classList.add('active');
+}
+
+function selectManut(el) {
+  document.querySelectorAll('.manut-card').forEach(function(c){ c.classList.remove('active'); });
+  el.classList.add('active');
+}
+
+function switchTab(el) {
+  document.querySelectorAll('.rides-tab').forEach(function(t){ t.classList.remove('active'); });
+  el.classList.add('active');
+}
+</script>
+</body>
+</html>
