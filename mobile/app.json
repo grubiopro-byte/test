@@ -1,0 +1,68 @@
+{
+  "expo": {
+    "name": "Livrizi",
+    "slug": "livrizi",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "livrizi",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1E40AF"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "fr.livrizi.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Livrizi utilise votre position pour trouver des livrizeurs près de vous.",
+        "NSLocationAlwaysUsageDescription": "Livrizi utilise votre position pour le suivi en temps réel.",
+        "NSCameraUsageDescription": "Livrizi utilise la caméra pour uploader des photos de vos objets.",
+        "NSPhotoLibraryUsageDescription": "Livrizi accède à votre galerie pour les photos d'objets."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#1E40AF"
+      },
+      "package": "fr.livrizi.app",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "POST_NOTIFICATIONS"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-location",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Autoriser Livrizi à utiliser la caméra"
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#1E40AF"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
