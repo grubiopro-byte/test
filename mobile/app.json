@@ -59,7 +59,16 @@
           "icon": "./assets/images/notification-icon.png",
           "color": "#1E40AF"
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker",
+      [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "merchant.fr.livrizi.app",
+          "enableGooglePay": true
+        }
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true
