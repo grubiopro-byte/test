@@ -1,0 +1,6 @@
+{
+  "name": "react-native-worklets",
+  "version": "1.0.0",
+  "description": "Stub for react-native-worklets babel plugin",
+  "main": "index.js"
+}
