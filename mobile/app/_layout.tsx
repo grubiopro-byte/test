@@ -18,6 +18,9 @@ export default function RootLayout() {
       setSession(session);
       setLoaded(true);
       SplashScreen.hideAsync();
+    }).catch(() => {
+      setLoaded(true);
+      SplashScreen.hideAsync();
     });
 
     const {
