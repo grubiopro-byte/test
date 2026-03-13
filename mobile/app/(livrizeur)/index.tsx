@@ -10,8 +10,8 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { supabase } from '@/lib/supabase';
 import { formatPrice } from '@/lib/pricing';
+import { DEMO_AVAILABLE_MISSIONS } from '@/lib/demo-data';
 import { VEHICLE_LABELS, MANUTENTION_LABELS, STATUS_LABELS } from '@/lib/types';
 import type { Course } from '@/lib/types';
 
@@ -97,49 +97,11 @@ function MissionCard({
 }
 
 export default function AvailableMissions() {
-  const [missions, setMissions] = useState<Course[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [missions, setMissions] = useState<Course[]>(DEMO_AVAILABLE_MISSIONS as Course[]);
+  const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [livrizeurId, setLivrizeurId] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadLivrizeur();
-  }, []);
-
-  async function loadLivrizeur() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-
-    const { data } = await supabase
-      .from('livrizeurs')
-      .select('id, vehicle_type, radius_km, latitude, longitude, status')
-      .eq('user_id', session.user.id)
-      .single();
-
-    if (data) {
-      setLivrizeurId(data.id);
-      if (data.status === 'active') {
-        await loadMissions(data);
-      }
-    }
-    setLoading(false);
-  }
-
-  async function loadMissions(livrizeur: any) {
-    const { data } = await supabase
-      .from('courses')
-      .select('*')
-      .eq('status', 'en_attente')
-      .eq('vehicle_type', livrizeur.vehicle_type)
-      .order('created_at', { ascending: false });
-
-    setMissions(data as Course[] || []);
-    setRefreshing(false);
-  }
-
-  async function acceptMission(course: Course) {
-    if (!livrizeurId) return;
-
+  function acceptMission(course: Course) {
     Alert.alert(
       'Accepter la mission ?',
       `Transport du ${course.scheduled_date} · Gains estimés : ${formatPrice(course.livrizeur_amount)}`,
@@ -147,23 +109,9 @@ export default function AvailableMissions() {
         { text: 'Annuler', style: 'cancel' },
         {
           text: 'Accepter',
-          onPress: async () => {
-            const { error } = await supabase
-              .from('courses')
-              .update({
-                status: 'acceptee',
-                livrizeur_id: livrizeurId,
-                accepted_at: new Date().toISOString(),
-              })
-              .eq('id', course.id)
-              .eq('status', 'en_attente'); // Prevent race condition
-
-            if (error) {
-              Alert.alert('Erreur', 'Cette mission a déjà été acceptée par un autre livrizeur');
-            } else {
-              Alert.alert('Mission acceptée ! 🎉', 'Le client a été notifié. Bonne course !');
-              setMissions((prev) => prev.filter((m) => m.id !== course.id));
-            }
+          onPress: () => {
+            Alert.alert('Mission acceptée ! 🎉', 'Le client a été notifié. Bonne course !');
+            setMissions((prev) => prev.filter((m) => m.id !== course.id));
           },
         },
       ]
@@ -195,7 +143,7 @@ export default function AvailableMissions() {
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
-              onRefresh={() => { setRefreshing(true); loadLivrizeur(); }}
+              onRefresh={() => { setRefreshing(true); setTimeout(() => setRefreshing(false), 800); }}
               tintColor="#1e40af"
             />
           }

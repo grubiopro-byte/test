@@ -10,55 +10,26 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { supabase } from '@/lib/supabase';
 import { formatPrice } from '@/lib/pricing';
+import { DEMO_MY_MISSIONS } from '@/lib/demo-data';
 import { STATUS_LABELS, STATUS_COLORS, VEHICLE_LABELS } from '@/lib/types';
 import type { Course } from '@/lib/types';
 
 export default function MyMissions() {
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [courses, setCourses] = useState<Course[]>(DEMO_MY_MISSIONS as Course[]);
+  const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming');
-
-  useEffect(() => {
-    loadMissions();
-  }, []);
-
-  async function loadMissions() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-
-    const { data: livrizeur } = await supabase
-      .from('livrizeurs')
-      .select('id')
-      .eq('user_id', session.user.id)
-      .single();
-
-    if (!livrizeur) { setLoading(false); return; }
-
-    const { data } = await supabase
-      .from('courses')
-      .select('*, client:users!client_id(*)')
-      .eq('livrizeur_id', livrizeur.id)
-      .order('scheduled_date', { ascending: false });
-
-    setCourses(data as Course[] || []);
-    setLoading(false);
-    setRefreshing(false);
-  }
 
   const ACTIVE = ['acceptee', 'en_route', 'sur_place', 'en_livraison'];
   const upcoming = courses.filter((c) => ACTIVE.includes(c.status) || (c.status === 'en_attente'));
   const past = courses.filter((c) => ['terminee', 'annulee'].includes(c.status));
   const displayed = tab === 'upcoming' ? upcoming : past;
 
-  async function updateStatus(courseId: string, newStatus: string) {
-    await supabase
-      .from('courses')
-      .update({ status: newStatus })
-      .eq('id', courseId);
-    loadMissions();
+  function updateStatus(courseId: string, newStatus: string) {
+    setCourses((prev) =>
+      prev.map((c) => (c.id === courseId ? { ...c, status: newStatus as Course['status'] } : c))
+    );
   }
 
   return (
@@ -94,7 +65,7 @@ export default function MyMissions() {
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
-              onRefresh={() => { setRefreshing(true); loadMissions(); }}
+              onRefresh={() => { setRefreshing(true); setTimeout(() => setRefreshing(false), 800); }}
               tintColor="#1e40af"
             />
           }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -10,40 +10,19 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { supabase } from '@/lib/supabase';
-import { signOut } from '@/lib/auth';
 import { VEHICLE_LABELS } from '@/lib/types';
 import type { User, Livrizeur } from '@/lib/types';
+import { DEMO_LIVRIZEUR_USER, DEMO_LIVRIZEUR_PROFILE } from '@/lib/demo-data';
 
 export default function LivrizeurProfile() {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
-  const [livrizeur, setLivrizeur] = useState<Livrizeur | null>(null);
+  const [user] = useState<User>(DEMO_LIVRIZEUR_USER as unknown as User);
+  const [livrizeur, setLivrizeur] = useState<Livrizeur>(DEMO_LIVRIZEUR_PROFILE as unknown as Livrizeur);
   const [editRadius, setEditRadius] = useState(false);
-  const [newRadius, setNewRadius] = useState('');
+  const [newRadius, setNewRadius] = useState(String(DEMO_LIVRIZEUR_PROFILE.radius_km));
 
-  useEffect(() => {
-    load();
-  }, []);
-
-  async function load() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-
-    const [{ data: u }, { data: l }] = await Promise.all([
-      supabase.from('users').select('*').eq('id', session.user.id).single(),
-      supabase.from('livrizeurs').select('*').eq('user_id', session.user.id).single(),
-    ]);
-
-    setUser(u as User);
-    setLivrizeur(l as Livrizeur);
-    setNewRadius(String(l?.radius_km || 30));
-  }
-
-  async function saveRadius() {
-    if (!livrizeur) return;
-    await supabase.from('livrizeurs').update({ radius_km: parseInt(newRadius) }).eq('id', livrizeur.id);
-    setLivrizeur((p) => p ? { ...p, radius_km: parseInt(newRadius) } : p);
+  function saveRadius() {
+    setLivrizeur((p) => ({ ...p, radius_km: parseInt(newRadius) }));
     setEditRadius(false);
     Alert.alert('✅ Rayon mis à jour');
   }
@@ -178,10 +157,7 @@ export default function LivrizeurProfile() {
 
           {/* Logout */}
           <TouchableOpacity
-            onPress={async () => {
-              await signOut();
-              router.replace('/(auth)/welcome');
-            }}
+            onPress={() => router.replace('/(auth)/welcome')}
             className="border-2 border-red-100 bg-red-50 rounded-2xl py-4 items-center flex-row justify-center gap-x-2 mb-8"
           >
             <Ionicons name="log-out-outline" size={20} color="#ef4444" />

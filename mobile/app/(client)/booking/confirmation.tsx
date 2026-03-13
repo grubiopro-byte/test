@@ -19,8 +19,10 @@ export default function Confirmation() {
   }, [id]);
 
   async function loadCourse() {
-    const { data } = await supabase.from('courses').select('*').eq('id', id).single();
-    setCourse(data as Course);
+    // MODE DEMO
+    const { DEMO_COURSES } = await import('@/lib/demo-data');
+    const found = DEMO_COURSES.find(c => c.id === id) || DEMO_COURSES[0];
+    setCourse(found as any);
     setLoading(false);
   }
 

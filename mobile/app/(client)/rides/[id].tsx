@@ -48,82 +48,33 @@ export default function RideDetail() {
   }, [id]);
 
   async function loadCourse() {
-    const { data } = await supabase
-      .from('courses')
-      .select('*, livrizeur:livrizeurs(*, user:users(*))')
-      .eq('id', id)
-      .single();
-    setCourse(data as Course);
+    // MODE DEMO
+    const { DEMO_COURSES } = await import('@/lib/demo-data');
+    const found = DEMO_COURSES.find(c => c.id === id) || DEMO_COURSES[0];
+    setCourse(found as any);
     setLoading(false);
   }
 
   function subscribeToUpdates() {
-    const channel = supabase
-      .channel(`course_${id}`)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'courses', filter: `id=eq.${id}` },
-        (payload) => setCourse(payload.new as Course)
-      )
-      .subscribe();
-
-    return () => supabase.removeChannel(channel);
+    // MODE DEMO : pas de realtime
+    return () => {};
   }
 
   async function handleComplete() {
-    Alert.alert(
-      'Confirmer la fin de course',
-      'Confirmez-vous que le transport est terminé ? Le paiement sera déclenché.',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Confirmer',
-          onPress: async () => {
-            await supabase
-              .from('courses')
-              .update({ status: 'terminee', completed_at: new Date().toISOString(), payment_status: 'captured' })
-              .eq('id', id);
-            setShowRating(true);
-          },
-        },
-      ]
-    );
+    Alert.alert('Confirmer', 'Course terminée (mode démo)', [
+      { text: 'Annuler', style: 'cancel' },
+      { text: 'Confirmer', onPress: () => setShowRating(true) },
+    ]);
   }
 
   async function handleCancel() {
-    Alert.alert(
-      'Annuler la course',
-      'Voulez-vous vraiment annuler ? Des frais peuvent s\'appliquer si la course est dans moins de 24h.',
-      [
-        { text: 'Non', style: 'cancel' },
-        {
-          text: 'Oui, annuler',
-          style: 'destructive',
-          onPress: async () => {
-            await supabase
-              .from('courses')
-              .update({ status: 'annulee', cancelled_at: new Date().toISOString(), cancelled_by: 'client' })
-              .eq('id', id);
-            router.back();
-          },
-        },
-      ]
-    );
+    Alert.alert('Annuler', 'Course annulée (mode démo)', [
+      { text: 'Non', style: 'cancel' },
+      { text: 'Oui', style: 'destructive', onPress: () => router.back() },
+    ]);
   }
 
   async function submitRating() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session || !course) return;
-
-    await supabase.from('ratings').insert({
-      course_id: course.id,
-      client_id: session.user.id,
-      livrizeur_id: course.livrizeur_id,
-      stars,
-    });
-
-    if (tip > 0) {
-      await supabase.from('courses').update({ tip_amount: tip }).eq('id', id);
-    }
-
     setShowRating(false);
     router.replace('/(client)/rides');
   }

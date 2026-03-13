@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
-import { View, Text, ScrollView, SafeAreaView, ActivityIndicator, RefreshControl } from 'react-native';
+import { useState } from 'react';
+import { View, Text, ScrollView, SafeAreaView, RefreshControl } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { supabase } from '@/lib/supabase';
 import { formatPrice } from '@/lib/pricing';
 import type { Course } from '@/lib/types';
+import { DEMO_COURSES } from '@/lib/demo-data';
 
 interface EarningPeriod {
   label: string;
@@ -45,34 +45,8 @@ function computePeriods(courses: Course[]): {
 }
 
 export default function Earnings() {
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [courses] = useState<Course[]>(DEMO_COURSES as Course[]);
   const [refreshing, setRefreshing] = useState(false);
-
-  useEffect(() => { load(); }, []);
-
-  async function load() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-
-    const { data: livrizeur } = await supabase
-      .from('livrizeurs')
-      .select('id')
-      .eq('user_id', session.user.id)
-      .single();
-
-    if (!livrizeur) { setLoading(false); return; }
-
-    const { data } = await supabase
-      .from('courses')
-      .select('*')
-      .eq('livrizeur_id', livrizeur.id)
-      .order('created_at', { ascending: false });
-
-    setCourses(data as Course[] || []);
-    setLoading(false);
-    setRefreshing(false);
-  }
 
   const periods = computePeriods(courses);
   const doneCourses = courses.filter((c) => c.status === 'terminee');
@@ -83,15 +57,10 @@ export default function Earnings() {
         <Text className="text-gray-900 text-2xl font-bold">Mes gains</Text>
       </View>
 
-      {loading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#1e40af" />
-        </View>
-      ) : (
-        <ScrollView
+      <ScrollView
           className="flex-1"
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor="#1e40af" />
+            <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); setTimeout(() => setRefreshing(false), 800); }} tintColor="#1e40af" />
           }
         >
           {/* Main stat */}
@@ -168,7 +137,6 @@ export default function Earnings() {
             ))}
           </View>
         </ScrollView>
-      )}
     </SafeAreaView>
   );
 }

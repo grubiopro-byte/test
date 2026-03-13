@@ -38,86 +38,9 @@ export default function Step6() {
       Alert.alert('Erreur', 'Veuillez remplir tous les champs');
       return;
     }
-
-    setLoading(true);
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      let clientId = session?.user?.id;
-
-      // If no session, create guest user
-      if (!clientId) {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password: Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2),
-          options: {
-            data: { first_name: firstName, last_name: lastName, phone, role: 'client' },
-          },
-        });
-        if (error) {
-          Alert.alert('Erreur', 'Impossible de créer votre compte');
-          return;
-        }
-        clientId = data.user?.id;
-
-        await supabase.from('users').upsert({
-          id: clientId,
-          email,
-          phone,
-          first_name: firstName,
-          last_name: lastName,
-          role: 'client',
-        });
-      }
-
-      // Create course
-      const { data: course, error: courseError } = await supabase
-        .from('courses')
-        .insert({
-          client_id: clientId,
-          pickup_address: store.pickupAddress,
-          pickup_lat: store.pickupLat,
-          pickup_lng: store.pickupLng,
-          dropoff_address: store.dropoffAddress,
-          dropoff_lat: store.dropoffLat,
-          dropoff_lng: store.dropoffLng,
-          vehicle_type: store.vehicleType,
-          movers: store.movers,
-          route_minutes: store.routeMinutes,
-          manutention: store.manutention,
-          pickup_access: store.pickupAccess,
-          pickup_floors: store.pickupFloors,
-          dropoff_access: store.dropoffAccess,
-          dropoff_floors: store.dropoffFloors,
-          items_description: store.itemsDescription,
-          items_photos: store.itemsPhotos,
-          additional_contact: store.additionalContact,
-          scheduled_date: store.scheduledDate,
-          scheduled_slot: store.scheduledSlot,
-          price_per_min: pricing.pricePerMin,
-          price_total: pricing.pTotal,
-          commission_amount: pricing.commissionAmount,
-          livrizeur_amount: pricing.livrizeurAmount,
-          helper_amount: pricing.helperAmount,
-          status: 'en_attente',
-          payment_status: 'pending',
-          tip_amount: 0,
-        })
-        .select()
-        .single();
-
-      if (courseError) {
-        Alert.alert('Erreur', 'Impossible de créer la réservation');
-        return;
-      }
-
-      store.reset();
-      router.replace(`/(client)/booking/confirmation?id=${course.id}`);
-    } catch (e) {
-      Alert.alert('Erreur', 'Une erreur est survenue. Veuillez réessayer.');
-    } finally {
-      setLoading(false);
-    }
+    // MODE DEMO : simule une réservation
+    store.reset();
+    router.replace('/(client)/booking/confirmation?id=course-demo');
   }
 
   return (

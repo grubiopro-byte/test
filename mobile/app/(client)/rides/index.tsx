@@ -83,16 +83,9 @@ export default function MyRides() {
   }, []);
 
   async function loadCourses() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-
-    const { data } = await supabase
-      .from('courses')
-      .select('*')
-      .eq('client_id', session.user.id)
-      .order('created_at', { ascending: false });
-
-    setCourses(data as Course[] || []);
+    // MODE DEMO
+    const { DEMO_COURSES } = await import('@/lib/demo-data');
+    setCourses(DEMO_COURSES as any);
     setLoading(false);
     setRefreshing(false);
   }

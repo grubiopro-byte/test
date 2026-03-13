@@ -32,29 +32,13 @@ export default function ClientHome() {
   }, []);
 
   async function loadUserData() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-
-    const { data: user } = await supabase
-      .from('users')
-      .select('first_name')
-      .eq('id', session.user.id)
-      .single();
-
-    if (user) setUserName(user.first_name || '');
-
-    // Check for active course
-    const { data: courses } = await supabase
-      .from('courses')
-      .select('*')
-      .eq('client_id', session.user.id)
-      .in('status', ['en_attente', 'acceptee', 'en_route', 'sur_place', 'en_livraison'])
-      .order('created_at', { ascending: false })
-      .limit(1);
-
-    if (courses && courses.length > 0) {
-      setActiveCourse(courses[0] as Course);
-    }
+    // MODE DEMO
+    const { DEMO_USER, DEMO_COURSES } = await import('@/lib/demo-data');
+    setUserName(DEMO_USER.first_name);
+    const active = DEMO_COURSES.find(c =>
+      ['en_attente', 'acceptee', 'en_route', 'sur_place', 'en_livraison'].includes(c.status)
+    );
+    if (active) setActiveCourse(active as any);
   }
 
   return (

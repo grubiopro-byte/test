@@ -25,37 +25,22 @@ export default function Profile() {
   }, []);
 
   async function loadUser() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-
-    const { data } = await supabase.from('users').select('*').eq('id', session.user.id).single();
-    if (data) {
-      setUser(data as User);
-      setForm({ first_name: data.first_name || '', last_name: data.last_name || '', phone: data.phone || '' });
-    }
+    // MODE DEMO
+    const { DEMO_USER } = await import('@/lib/demo-data');
+    setUser(DEMO_USER as any);
+    setForm({ first_name: DEMO_USER.first_name, last_name: DEMO_USER.last_name, phone: DEMO_USER.phone });
   }
 
   async function handleSave() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
-
-    await supabase.from('users').update(form).eq('id', session.user.id);
     setUser((prev) => prev ? { ...prev, ...form } : prev);
     setEditing(false);
-    Alert.alert('Succès', 'Profil mis à jour');
+    Alert.alert('Succès', 'Profil mis à jour (mode démo)');
   }
 
   async function handleLogout() {
     Alert.alert('Déconnexion', 'Voulez-vous vraiment vous déconnecter ?', [
       { text: 'Annuler', style: 'cancel' },
-      {
-        text: 'Déconnexion',
-        style: 'destructive',
-        onPress: async () => {
-          await signOut();
-          router.replace('/(auth)/welcome');
-        },
-      },
+      { text: 'Déconnexion', style: 'destructive', onPress: () => router.replace('/(auth)/welcome') },
     ]);
   }
 
